@@ -1,0 +1,46 @@
+# Walkthrough: Penyelesaian Bug, Optimasi AI, dan Fitur Baru Ogut POS
+
+Selamat! Semua perbaikan *bug*, optimasi algoritma AI, serta fitur baru (Edit Menu) telah berhasil diimplementasikan pada sistem. Berikut adalah ringkasan fitur terbaru yang kini berjalan di *production*:
+
+## 1. Fitur Baru: Edit Menu & Resep
+Kini Anda tidak hanya bisa menambahkan menu, tetapi juga mengedit menu yang sudah ada melalui halaman **Manajemen Menu**:
+*   **Akses Cepat**: Arahkan kursor (*hover*) ke salah satu kartu menu, maka tombol **Edit (Ikon Pensil)** akan muncul di pojok kiri atas foto menu tersebut.
+*   **Auto-Fill Cerdas**: Saat Anda mengklik tombol Edit, form akan secara otomatis terisi dengan data menu saat ini, termasuk Foto, Nama, HPP, Harga, dan Kategori.
+*   **Edit Resep Terintegrasi**: Di Langkah 2, semua bahan baku penyusun menu (resep) juga akan termuat otomatis. Anda dapat:
+    *   Menghapus bahan baku yang tidak lagi digunakan.
+    *   Mengubah takaran (*quantity*) bahan baku lama.
+    *   Menambahkan bahan baku baru dari gudang.
+*   **Perlindungan Data Gudang**: Jika Anda menghapus bahan baku dari suatu resep, bahan tersebut hanya terhapus dari resep menu itu saja. Stok fisiknya di Gudang Utama tetap aman dan tidak akan terhapus.
+
+## 2. Optimasi Akurasi AI (Python)
+Kelemahan matematis pada modul AI telah diperbaiki di *backend* Python:
+*   **Prediksi Stok (Linear Regression)**: Model sekarang dilatih untuk membaca **"Tingkat Konsumsi Harian"** (`stock_used`), bukan sisa stok. AI memprediksi berapa banyak bahan baku yang akan dipakai selama 7 hari ke depan, lalu menguranginya dari stok saat ini. Jika hasilnya **minus (-)**, itu adalah instruksi langsung bagi Anda untuk restock!
+*   **Segmentasi Menu (K-Means)**: Pengelompokan produk Laris/Kurang Laris kini menggunakan **Total Keuntungan (`sum`)**, bukan rata-rata. K-Means juga sudah dibuat adaptif sehingga tidak akan error (crash) jika toko baru saja buka dan baru memiliki 1 atau 2 produk yang terjual. Server Python juga sudah di-*restart* agar perubahan langsung aktif.
+*   **Perbaikan UI**: Bug visual di mana label "Kurang Laris" ikut berubah warna menjadi hijau kini telah diperbaiki (kini berwarna merah).
+
+## 3. Kalkulasi Real Skema Stok (Penambahan & Pengurangan)
+
+Berikut adalah panduan lengkap bagaimana sistem Anda memanipulasi stok secara *real-time*:
+
+### A. Skema Pengurangan (Transaksi Kasir)
+Sistem ini menggunakan **Database Trigger Otomatis** (`on_transaction_item_insert`) di Supabase, bukan mengandalkan *frontend*. Ini menjamin 100% konsistensi data.
+
+**Rumus:**
+`Stok Baru = Stok Lama - (Jumlah Beli × Kebutuhan Resep)`
+
+**Contoh Kasus:**
+1. Kasir memproses transaksi (Checkout) untuk **3 Kopi Susu Gula Aren**.
+2. Detik itu juga, Trigger berjalan di *background* menggunakan akses keamanan tingkat tinggi (`SECURITY DEFINER`) dan memotong tabel `materials`:
+   * Biji Kopi: Berkurang 45 gram (3 × 15)
+   * Susu: Berkurang 450 ml (3 × 150)
+   * Gula Aren: Berkurang 60 ml (3 × 20)
+3. Aktivitas ini **langsung tercatat** di tabel `inventory_logs` hari ini sebagai `stock_used`.
+
+### B. Skema Penambahan (Pembelian dari Supplier)
+Untuk menambah stok (misal: barang dari supplier datang), Anda menggunakan modul **Manajemen Bahan (Update Stock)** di halaman *Inventory*.
+
+**Skema Kerja:**
+1. Pengguna membuka modal `UpdateStockModal.jsx`.
+2. Pengguna memasukkan **Stok Aktual/Total Akhir** (Contoh: Stok kemarin 1000 ml. Anda beli 2000 ml. Anda masukkan angka `3000` di kolom form).
+3. Sistem akan **menimpa (overwrite)** `current_stock` di database menjadi `3000`.
+4. Trigger tambahan di database akan otomatis mendeteksi perubahan ini dan langsung memperbarui baris hari ini di tabel `inventory_logs` sehingga angka histori selalu cocok dengan fisik gudang, tanpa ada *delay* laporan.

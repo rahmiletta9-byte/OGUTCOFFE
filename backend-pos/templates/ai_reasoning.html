@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <title>AI Reasoning - Ogut Coffee</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-slate-100 p-8">
+    <div class="max-w-4xl mx-auto bg-white p-6 rounded-xl shadow-md space-y-6">
+        <div class="flex justify-between items-center mb-2">
+            <h1 class="text-2xl font-bold text-slate-800">🤖 Rekapan Logika & Alur Data AI</h1>
+            <a href="/admin/dashboard" class="text-blue-600 hover:underline font-semibold">← Kembali</a>
+        </div>
+
+        <!-- K-MEANS REASONING -->
+        <div class="p-4 border border-purple-200 bg-purple-50 rounded-lg">
+            <h2 class="text-xl font-bold text-purple-800">Logika K-Means (Segmentasi)</h2>
+            <p class="mt-2 text-sm text-slate-600"><b>Cara Kerja AI:</b> AI mengubah volume dan margin ke skala 0-1, lalu mencari 3 titik keseimbangan (Centroid).</p>
+            <div class="mt-4 p-3 bg-white border rounded font-mono text-sm">
+                <p>» Silhouette Score: {{ thoughts.kmeans.silhouette if thoughts.kmeans else 'Belum dievaluasi' }}</p>
+                <p>» Alasan Matematis: {{ thoughts.kmeans.alasan if thoughts.kmeans else 'Belum dievaluasi' }}</p>
+            </div>
+        </div>
+
+        <!-- LINEAR REGRESSION REASONING -->
+        <div class="p-4 border border-red-200 bg-red-50 rounded-lg">
+            <h2 class="text-xl font-bold text-red-800">Logika Regresi Linier (Prediksi Stok)</h2>
+            <p class="mt-2 text-sm text-slate-600"><b>Cara Kerja AI:</b> AI menarik garis lurus (y = mx + c) melintasi data historis sisa stok malam hari selama 30 hari terakhir.</p>
+            <div class="mt-4 p-3 bg-white border rounded font-mono text-sm">
+                <p>» Model menggunakan fungsi: y_pred = model.predict(future_days)</p>
+                <p>» Rata-rata kemelesetan (MAPE): Disimpan per bahan baku di Database.</p>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

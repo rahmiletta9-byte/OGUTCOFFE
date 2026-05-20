@@ -1,0 +1,151 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 30 14% 97%;
+    --foreground: 20 14% 4%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 20 14% 4%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 20 14% 4%;
+
+    --primary: 20 85% 24%;
+    --primary-foreground: 30 14% 97%;
+
+    --secondary: 45 93% 89%;
+    --secondary-foreground: 20 85% 24%;
+
+    --muted: 30 5% 90%;
+    --muted-foreground: 30 5% 40%;
+
+    --accent: 45 93% 89%;
+    --accent-foreground: 20 85% 24%;
+
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 0 0% 98%;
+
+    --border: 30 5% 90%;
+    --input: 30 5% 90%;
+    --ring: 20 85% 24%;
+
+    --radius: 1.5rem;
+  }
+
+  .dark {
+    --background: 20 14% 4%;
+    --foreground: 0 0% 98%;
+
+    --card: 20 14% 4%;
+    --card-foreground: 0 0% 98%;
+
+    --popover: 20 14% 4%;
+    --popover-foreground: 0 0% 98%;
+
+    --primary: 20 85% 24%;
+    --primary-foreground: 0 0% 98%;
+
+    --secondary: 12 6.5% 15.1%;
+    --secondary-foreground: 0 0% 98%;
+
+    --muted: 12 6.5% 15.1%;
+    --muted-foreground: 24 5.4% 63.9%;
+
+    --accent: 12 6.5% 15.1%;
+    --accent-foreground: 0 0% 98%;
+
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 0 0% 98%;
+
+    --border: 12 6.5% 15.1%;
+    --input: 12 6.5% 15.1%;
+    --ring: 20 85% 24%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+}
+
+/* Custom Claymorphism Utilities */
+@layer components {
+  .clay-card {
+    @apply border-none transition-all duration-300;
+    background: white;
+    border-radius: 2.5rem;
+    box-shadow: 
+      8px 8px 16px rgba(0, 0, 0, 0.03),
+      -8px -8px 16px rgba(255, 255, 255, 0.8),
+      inset 4px 4px 8px rgba(255, 255, 255, 0.6),
+      inset -4px -4px 8px rgba(0, 0, 0, 0.02);
+  }
+
+  .clay-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 
+      12px 12px 24px rgba(0, 0, 0, 0.04),
+      -12px -12px 24px rgba(255, 255, 255, 0.9),
+      inset 4px 4px 8px rgba(255, 255, 255, 0.6),
+      inset -4px -4px 8px rgba(0, 0, 0, 0.02);
+  }
+
+  .clay-button {
+    @apply transition-all duration-200 active:scale-95 flex items-center justify-center font-bold uppercase tracking-widest;
+    border-radius: 1.25rem;
+    box-shadow: 
+      4px 4px 8px rgba(0, 0, 0, 0.05),
+      inset 2px 2px 4px rgba(255, 255, 255, 0.3),
+      inset -2px -2px 4px rgba(0, 0, 0, 0.05);
+  }
+
+  .clay-button-primary {
+    @apply clay-button bg-primary text-primary-foreground;
+    box-shadow: 
+      4px 4px 12px rgba(120, 53, 15, 0.15),
+      inset 2px 2px 4px rgba(255, 255, 255, 0.2),
+      inset -2px -2px 4px rgba(0, 0, 0, 0.1);
+  }
+
+  .clay-input {
+    @apply w-full border-none outline-none transition-all bg-muted/30 px-6 py-4;
+    border-radius: 1.5rem;
+    box-shadow: 
+      inset 4px 4px 8px rgba(0, 0, 0, 0.03),
+      inset -4px -4px 8px rgba(255, 255, 255, 0.5);
+  }
+
+  .clay-input:focus {
+    @apply bg-muted/50;
+    box-shadow: 
+      inset 6px 6px 12px rgba(0, 0, 0, 0.05),
+      inset -6px -6px 12px rgba(255, 255, 255, 0.8),
+      0 0 0 2px hsl(var(--primary) / 0.1);
+  }
+
+  .clay-badge {
+    @apply px-3 py-1 text-[10px] font-black uppercase tracking-tighter border-none flex items-center gap-1;
+    border-radius: 0.75rem;
+    box-shadow: 
+      2px 2px 4px rgba(0, 0, 0, 0.03),
+      inset 1px 1px 2px rgba(255, 255, 255, 0.5);
+  }
+}
+
+/* Hide scrollbar for Chrome, Safari and Opera */
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+
+/* Hide scrollbar for IE, Edge and Firefox */
+.scrollbar-hide {
+  -ms-overflow-style: none;  /* IE and Edge */
+  scrollbar-width: none;  /* Firefox */
+}

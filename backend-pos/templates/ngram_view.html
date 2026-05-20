@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <title>N-Gram Cache View - Ogut Coffee</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-slate-100 p-8">
+    <div class="max-w-4xl mx-auto bg-white p-6 rounded-xl shadow-md">
+        <div class="flex justify-between items-center mb-6">
+            <h1 class="text-2xl font-bold">🧠 Pemantauan Memori N-Gram (RAM)</h1>
+            <a href="/admin/dashboard" class="text-blue-600 hover:underline font-semibold">← Kembali</a>
+        </div>
+
+        <p class="mb-4">Total Menu dalam Cache: <b>{{ stats.total_items }}</b></p>
+
+        <table class="w-full text-left border">
+            <tr class="bg-slate-100 border-b"><th class="p-2">Nama Menu</th><th class="p-2">Skor Popularitas (Hits)</th></tr>
+            {% for nama, skor in stats.data.items() %}
+            <tr class="border-b">
+                <td class="p-2">{{ nama }}</td>
+                <td class="p-2 font-mono text-orange-600">{{ skor }}</td>
+            </tr>
+            {% endfor %}
+        </table>
+    </div>
+</body>
+</html>

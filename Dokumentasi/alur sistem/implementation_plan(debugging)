@@ -1,0 +1,60 @@
+# Rencana Pengujian & Integrasi Sistem (React ⇄ Flask)
+
+Berdasarkan `Dokumentasi Integrasi Sistem.md`, rencana implementasi ini merinci langkah-langkah sistematis untuk memverifikasi alur kerja antara Frontend (React), Backend (Flask), dan Database (Supabase).
+
+## User Review Required
+
+> [!IMPORTANT]
+> Harap tinjau rencana pengujian di bawah ini. Pengujian ini memerlukan simulasi interaksi di UI Frontend (React) dan Control Panel Backend (Flask) serta verifikasi data di Supabase.
+
+## Open Questions
+
+1. Apakah Frontend React saat ini sudah siap untuk di-test (sudah terhubung ke URL lokal Flask `http://localhost:5000`)?
+2. Apakah kita perlu menyiapkan *dummy data* transaksi/inventaris terlebih dahulu di Supabase agar fitur Machine Learning dapat langsung dievaluasi?
+
+## Proposed Changes (Skenario Pengujian)
+
+Tidak ada perubahan kode secara langsung pada tahap ini. Fokus utamanya adalah melakukan serangkaian pengujian integrasi (Integration Testing) dengan skenario berikut:
+
+### 1. Pengujian Jalur A (API Waktu Nyata / N-Gram Cache)
+
+Fokus: Menguji responsibilitas endpoint Flask saat kasir berinteraksi.
+
+- **Uji `GET /api/suggest`**:
+  - Menjalankan React dan Flask secara bersamaan.
+  - Mengetikkan kata kunci (contoh: "ko") di halaman pencarian kasir.
+  - Memastikan *Network tab* mencatat *request* ke `http://localhost:5000/api/suggest?q=ko` dan antarmuka React seketika menampilkan hasil yang relevan.
+
+- **Uji `POST /api/ngram/increment` (Fire-and-Forget)**:
+  - Melakukan *Checkout* satu transaksi di aplikasi React.
+  - Memastikan ada *request* POST ke `http://localhost:5000/api/ngram/increment` yang berhasil.
+  - Membuka Dasbor N-Gram Flask (`http://localhost:5000/admin/ngram`) untuk memverifikasi bahwa skor/hits menu yang dibeli telah bertambah.
+
+### 2. Pengujian Jalur B (Jembatan Supabase & Pipa AI)
+
+Fokus: Menguji fungsi agregasi dan prediksi stok AI yang berjalan di *background*.
+
+- **Simulasi Input Siang Hari**:
+  - Melakukan *update* stok di halaman Inventaris (React) sehingga data masuk ke `inventory_logs`.
+- **Simulasi Eksekusi Malam Hari**:
+  - Membuka Control Panel Flask (`http://localhost:5000/admin/dashboard`).
+  - Menekan tombol **"Paksa Jalankan AI Sekarang (Force Run)"** untuk mengeksekusi K-Means dan Regresi Linier secara manual.
+- **Verifikasi Hasil Pagi Hari**:
+  - Mengecek database Supabase (`ai_prediction_results` dan `ai_cluster_results`) untuk melihat hasil komputasi.
+  - Membuka halaman Dashboard React untuk memastikan angka prediksi stok "Peringatan Dini" dan metrik klastering tersaji dengan benar.
+
+### 3. Pengujian Daya Tahan (Fallback & Error Handling)
+
+Fokus: Memastikan React tidak *crash* ketika backend mati.
+
+- Mematikan server Flask.
+- Melakukan pencarian di React (harus tetap berfungsi dengan filter lokal).
+- Melakukan *Checkout* transaksi (transaksi Supabase harus berhasil, sementara *error* ke Flask ditangkap diam-diam di *background* tanpa notifikasi yang mengganggu kasir).
+
+## Verification Plan
+
+### Manual Verification
+- Melaksanakan pengujian secara berurutan sesuai skenario di atas.
+- Mengecek status jaringan di Chrome DevTools (CORS & HTTP 200/400).
+- Mengecek kesesuaian data di tabel Supabase setelah proses Force Run AI.
+- Memastikan tidak ada *white screen* (crash) pada layar frontend saat peladen Flask dinonaktifkan secara mendadak.

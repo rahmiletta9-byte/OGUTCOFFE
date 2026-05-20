@@ -1,0 +1,27 @@
+# Pembaruan: Halaman Riwayat Stok (Inventory Logs)
+
+Sistem pemantauan telah diperluas dengan ditambahkannya fitur historikal untuk divisi gudang.
+
+## 1. Pembuatan Halaman Riwayat Stok (`/inventory-logs`)
+Fitur pencatatan sisa stok harian kini divisualisasikan dalam halaman **Riwayat Stok**.
+Halaman ini sangat penting karena data di dalamnya (berapa stok yang terpakai dan berapa sisa akhirnya) akan menjadi referensi *machine learning* untuk *AI Forecast*.
+
+- **Tabel Monitoring Historikal**: Halaman ini merender *tabel* bergaya bersih (clean aesthetic / claymorphism) yang memuat riwayat:
+  - Tanggal Pencatatan.
+  - Nama Bahan & Kategori.
+  - Jumlah Terpakai (dengan indikator visual merah jika stok digunakan).
+  - Sisa Stok Akhir Hari.
+- **Smart Filter**: Memiliki *search bar* yang secara responsif dapat memfilter langsung berdasarkan tanggal (contoh: `2026-04-13`) atau berdasarkan nama bahan baku (contoh: `Susu`).
+
+## 2. Navigasi & Keamanan Akses
+Berbeda dengan Log Aktivitas yang hanya khusus `admin`, halaman ini ditujukan secara fungsional untuk pengelola gudang. Oleh karena itu, aksesibilitasnya dibagikan kepada:
+- **Role `admin`**
+- **Role `manajemen_bahan`**
+
+Anda dapat mengaksesnya melalui bar navigasi sebelah kiri, tepat di bawah menu **Gudang Bahan** dengan label **Riwayat Stok** (ikon kalender/histori).
+
+## 3. Cara Pengujian
+1. Masuk ke aplikasi menggunakan akun `admin` atau akun yang berstatus `manajemen_bahan`.
+2. Klik navigasi **Riwayat Stok** di bilah menu kiri.
+3. Anda akan melihat tabel berisi riwayat yang sudah pernah dibuat oleh sistem (atau riwayat harian).
+4. Cobalah mengetikkan nama bahan di kotak pencarian untuk melihat seberapa cepat dan akurat tabel memfilter rekaman historisnya.
