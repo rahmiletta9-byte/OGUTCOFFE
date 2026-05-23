@@ -2,6 +2,19 @@ import { supabase } from '@/lib/supabaseClient';
 
 export const processCheckout = async (cartItems, totalAmount, paymentMethod, customerName = '', tableNumber = '') => {
   try {
+    // 0. Validasi stok sebelum checkout
+    const insufficientStockItems = cartItems.filter(item =>
+      item.max_servings !== undefined && (item.max_servings <= 0 || item.qty > item.max_servings)
+    );
+    if (insufficientStockItems.length > 0) {
+      const details = insufficientStockItems.map(i => 
+        i.max_servings <= 0 
+          ? `${i.name} (HABIS)` 
+          : `${i.name} (Tersedia: ${i.max_servings}, Dipesan: ${i.qty})`
+      ).join(', ');
+      throw new Error(`Stok bahan tidak mencukupi untuk menu: ${details}`);
+    }
+
     // 1. Catat Header Transaksi ke Supabase
     const transactionPayload = { 
       total_amount: totalAmount,

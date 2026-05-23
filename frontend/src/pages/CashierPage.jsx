@@ -4,6 +4,7 @@ import { supabase } from '@/lib/supabaseClient';
 import { useAuth } from '@/features/auth/context/AuthContext';
 import useDebounce from '@/features/pos/hooks/useDebounce';
 import { processCheckout } from '@/features/pos/services/checkoutService';
+import { fetchProductsWithStock } from '@/features/pos/services/stockService';
 
 // UI Components
 import { Button } from "@/components/ui/button";
@@ -27,6 +28,7 @@ export default function CashierPage() {
   const { user, role } = useAuth();
   
   // State
+  const [allProducts, setAllProducts] = useState([]);
   const [products, setProducts] = useState([]);
   const [cart, setCart] = useState([]);
   const [searchQuery, setSearchQuery] = useState('');
@@ -41,30 +43,46 @@ export default function CashierPage() {
 
   const debouncedSearch = useDebounce(searchQuery, 300);
 
-  // Data Fetching
+  // Data Fetching function
+  const fetchProducts = async (showLoading = true) => {
+    if (showLoading) setIsLoading(true);
+    try {
+      const data = await fetchProductsWithStock();
+      if (data) setAllProducts(data);
+    } catch (err) {
+      console.error("Fetch products failed:", err);
+    } finally {
+      if (showLoading) setIsLoading(false);
+    }
+  };
+
   useEffect(() => {
-    const fetchProducts = async () => {
-      setIsLoading(true);
-      try {
-        let query = supabase.from('products').select('*');
-        if (debouncedSearch) query = query.ilike('name', `%${debouncedSearch}%`);
-        if (activeCategory !== 'All') query = query.eq('category', activeCategory);
-        
-        const { data } = await query.order('name');
-        if (data) setProducts(data);
-      } catch (err) {
-        console.error("Fetch products failed:", err);
-      } finally {
-        setIsLoading(false);
-      }
-    };
     fetchProducts();
-  }, [debouncedSearch, activeCategory]);
+  }, []);
+
+  // Filter in client-side
+  useEffect(() => {
+    let filtered = [...allProducts];
+    if (debouncedSearch) {
+      filtered = filtered.filter(p => 
+        p.name.toLowerCase().includes(debouncedSearch.toLowerCase())
+      );
+    }
+    if (activeCategory !== 'All') {
+      filtered = filtered.filter(p => p.category === activeCategory);
+    }
+    setProducts(filtered);
+  }, [allProducts, debouncedSearch, activeCategory]);
 
   // Handlers
   const handleAddToCart = (product) => {
     setCart(prev => {
       const existing = prev.find(item => item.id === product.id);
+      const currentQty = existing ? existing.qty : 0;
+      if (product.max_servings !== undefined && currentQty >= product.max_servings) {
+        alert(`Tidak dapat menambahkan lebih dari ${product.max_servings} porsi (stok terbatas)`);
+        return prev;
+      }
       if (existing) return prev.map(item => item.id === product.id ? { ...item, qty: item.qty + 1 } : item);
       return [...prev, { ...product, qty: 1 }];
     });
@@ -74,6 +92,10 @@ export default function CashierPage() {
     setCart(prev => prev.map(item => {
       if (item.id === id) {
         const newQty = item.qty + delta;
+        if (delta > 0 && item.max_servings !== undefined && newQty > item.max_servings) {
+          alert(`Tidak dapat menambahkan lebih dari ${item.max_servings} porsi (stok terbatas)`);
+          return item;
+        }
         return newQty > 0 ? { ...item, qty: newQty } : item;
       }
       return item;
@@ -96,6 +118,7 @@ export default function CashierPage() {
       setCart([]);
       setCustomerName('');
       setTableNumber('');
+      fetchProducts(false); // Re-fetch products to update stock
     } else {
       alert("Gagal memproses transaksi: " + result.error);
     }

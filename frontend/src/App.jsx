@@ -8,6 +8,7 @@ import MainLayout from '@/components/layout/MainLayout';
 // Lazy load komponen halaman untuk optimasi performa (Code Splitting)
 const LoginPage = lazy(() => import('@/pages/LoginPage'));
 const CashierPage = lazy(() => import('@/pages/CashierPage'));
+const OrderHistoryPage = lazy(() => import('@/pages/OrderHistoryPage'));
 const DashboardPage = lazy(() => import('@/pages/DashboardPage'));
 const InventoryPage = lazy(() => import('@/pages/InventoryPage'));
 const InventoryLogPage = lazy(() => import('@/pages/InventoryLogPage'));
@@ -39,6 +40,12 @@ export default function App() {
               <Route path="/pos" element={
                 <ProtectedRoute allowedRoles={['kasir', 'admin']}>
                   <CashierPage />
+                </ProtectedRoute>
+              } />
+
+              <Route path="/order-history" element={
+                <ProtectedRoute allowedRoles={['kasir', 'admin']}>
+                  <OrderHistoryPage />
                 </ProtectedRoute>
               } />
 

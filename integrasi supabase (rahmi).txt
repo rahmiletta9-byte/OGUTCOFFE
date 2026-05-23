@@ -1,0 +1,23 @@
+1. pass supabase akun
+%C8uJCifFx?Fi@c
+
+2. koneksi database
+postgresql://postgres.hvlozalqchfjqplnwfgs:%C8uJCifFx?Fi@c@aws-1-ap-northeast-1.pooler.supabase.com:5432/postgres
+a. host: aws-1-ap-northeast-1.pooler.supabase.com
+b. port: 5432
+c. database: postgres
+d. user: postgres.hvlozalqchfjqplnwfgs
+
+3. pass storage supabase
+a. access key id: 059dabaad24f7d956bbfb8a3ab2e8da4
+b. secret access key: 48c0d6b9904fe8e225d8f56c21de4344086858c7cf8322a3b43c0a4464206df2
+c. endpoint: https://hvlozalqchfjqplnwfgs.storage.supabase.co/storage/v1/s3
+d. region: ap-northeast-1
+
+4. env. untuk react
+VITE_SUPABASE_URL=https://hvlozalqchfjqplnwfgs.supabase.co
+VITE_SUPABASE_PUBLISHABLE_KEY=sb_publishable_fCJt6K3HWXGoXwBlLn64PQ_UEaFzhsp
+
+5. env. untuk flask
+SUPABASE_URL=https://hvlozalqchfjqplnwfgs.supabase.co
+SUPABASE_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imh2bG96YWxxY2hmanFwbG53ZmdzIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3ODU4NzgxOSwiZXhwIjoyMDk0MTYzODE5fQ.kTWmLSSFAECxPRX5E11wjpGGHYOjomv4Zx1vPmKzvkc

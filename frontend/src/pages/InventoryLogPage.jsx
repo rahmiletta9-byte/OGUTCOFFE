@@ -1,19 +1,32 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabaseClient';
-import { Search, ClipboardList, PackageOpen, Calendar, ArrowDownRight } from 'lucide-react';
+import { Search, PackageOpen, Calendar, ArrowDownRight, FilterX } from 'lucide-react';
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import PageHeader from '@/components/layout/PageHeader';
+import Pagination from '@/features/orders/components/Pagination';
 
 export default function InventoryLogPage() {
   const [logs, setLogs] = useState([]);
   const [searchQuery, setSearchQuery] = useState('');
+  const [startDateStr, setStartDateStr] = useState('');
+  const [endDateStr, setEndDateStr] = useState('');
   const [isLoading, setIsLoading] = useState(true);
+
+  // State Pagination
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize] = useState(10);
 
   useEffect(() => {
     fetchLogs();
   }, []);
+
+  // Reset page to 1 when filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchQuery, startDateStr, endDateStr]);
 
   const fetchLogs = async () => {
     setIsLoading(true);
@@ -42,34 +55,98 @@ export default function InventoryLogPage() {
     }
   };
 
+  const handleResetFilters = () => {
+    setSearchQuery('');
+    setStartDateStr('');
+    setEndDateStr('');
+    setCurrentPage(1);
+  };
+
   const filteredLogs = logs.filter(log => {
-    if (!searchQuery) return true;
+    // 1. Search filter
     const q = searchQuery.toLowerCase();
     const materialName = log.materials?.name?.toLowerCase() || '';
-    const dateStr = log.date || '';
-    return materialName.includes(q) || dateStr.includes(q);
+    const matchesSearch = !searchQuery || materialName.includes(q);
+
+    // 2. Date filter (log.date is 'YYYY-MM-DD')
+    let matchesDate = true;
+    if (startDateStr) {
+      matchesDate = matchesDate && log.date >= startDateStr;
+    }
+    if (endDateStr) {
+      matchesDate = matchesDate && log.date <= endDateStr;
+    }
+
+    return matchesSearch && matchesDate;
   });
 
+  // Pagination calculations
+  const totalCount = filteredLogs.length;
+  const totalPages = Math.ceil(totalCount / pageSize);
+  const paginatedLogs = filteredLogs.slice(
+    (currentPage - 1) * pageSize,
+    currentPage * pageSize
+  );
+
   return (
-    <div className="flex-1 w-full bg-background overflow-hidden font-sans text-foreground flex">
+    <div className="flex-1 w-full bg-background overflow-hidden font-sans text-foreground flex animate-in fade-in duration-300">
       <main className="flex-1 flex flex-col min-w-0 clay-card m-4 overflow-hidden">
         
         {/* Header Section */}
-        <div className="p-10 pb-4">
-          <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-8 mb-10">
+        <div className="p-10 pb-4 space-y-6">
+          <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
             <PageHeader 
               title="Riwayat Stok Harian" 
               subtitle="Monitoring pergerakan pemakaian bahan baku" 
             />
 
-            <div className="relative w-full lg:w-[400px]">
+            {/* Reset Filter Button */}
+            {(searchQuery || startDateStr || endDateStr) && (
+              <Button
+                variant="outline"
+                onClick={handleResetFilters}
+                className="h-12 px-6 rounded-2xl font-black text-xs uppercase tracking-widest text-destructive hover:bg-destructive/5 border-destructive/20 flex items-center gap-2 self-start lg:self-auto transition-all"
+              >
+                <FilterX size={16} />
+                Reset Filter
+              </Button>
+            )}
+          </div>
+
+          {/* Filter Bar */}
+          <div className="grid grid-cols-1 md:grid-cols-12 gap-4 items-center">
+            {/* Search Input */}
+            <div className="relative md:col-span-6 xl:col-span-8">
               <Search className="absolute left-6 top-1/2 -translate-y-1/2 text-muted-foreground opacity-40" size={20} />
               <Input 
-                placeholder="Cari nama bahan atau YYYY-MM-DD..."
-                className="clay-input pl-16 h-16"
+                placeholder="Cari nama bahan baku..."
+                className="clay-input pl-16 h-14"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
               />
+            </div>
+
+            {/* Date Pickers */}
+            <div className="md:col-span-6 xl:col-span-4 flex items-center gap-2">
+              <div className="relative flex-1">
+                <Calendar className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground/45 pointer-events-none" size={14} />
+                <input
+                  type="date"
+                  value={startDateStr}
+                  onChange={(e) => setStartDateStr(e.target.value)}
+                  className="w-full clay-input pl-11 pr-3 h-14 text-xs font-black uppercase text-muted-foreground tracking-widest bg-transparent border border-muted/20 rounded-2xl focus:outline-none"
+                />
+              </div>
+              <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/40">s/d</span>
+              <div className="relative flex-1">
+                <Calendar className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground/45 pointer-events-none" size={14} />
+                <input
+                  type="date"
+                  value={endDateStr}
+                  onChange={(e) => setEndDateStr(e.target.value)}
+                  className="w-full clay-input pl-11 pr-3 h-14 text-xs font-black uppercase text-muted-foreground tracking-widest bg-transparent border border-muted/20 rounded-2xl focus:outline-none"
+                />
+              </div>
             </div>
           </div>
         </div>
@@ -82,8 +159,8 @@ export default function InventoryLogPage() {
                     <div key={i} className="h-24 bg-muted/30 rounded-[1.5rem] animate-pulse w-full"></div>
                 ))}
             </div>
-          ) : filteredLogs.length > 0 ? (
-            <div className="bg-white rounded-[2rem] border border-muted/20 shadow-sm overflow-hidden clay-card shadow-none">
+          ) : paginatedLogs.length > 0 ? (
+            <div className="bg-white rounded-[2rem] border border-muted/20 shadow-sm overflow-hidden clay-card shadow-none flex flex-col justify-between min-h-full">
                 <div className="overflow-x-auto">
                     <table className="w-full text-left border-collapse">
                         <thead>
@@ -96,7 +173,7 @@ export default function InventoryLogPage() {
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-muted/10">
-                            {filteredLogs.map((log) => (
+                            {paginatedLogs.map((log) => (
                                 <tr key={log.id} className="hover:bg-muted/5 transition-colors group">
                                     <td className="p-5">
                                         <div className="flex items-center gap-2 font-bold text-sm text-foreground">
@@ -132,6 +209,18 @@ export default function InventoryLogPage() {
                             ))}
                         </tbody>
                     </table>
+                </div>
+
+                {/* Pagination Controls */}
+                <div className="p-6 bg-muted/5 border-t border-dashed border-muted/20">
+                  <Pagination
+                    currentPage={currentPage}
+                    totalPages={totalPages}
+                    totalCount={totalCount}
+                    pageSize={pageSize}
+                    onPageChange={setCurrentPage}
+                    label="Item"
+                  />
                 </div>
             </div>
           ) : (

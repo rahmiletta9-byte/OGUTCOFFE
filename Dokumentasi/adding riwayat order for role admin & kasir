@@ -1,0 +1,60 @@
+# Walkthrough: Fitur Baru - Riwayat Order (Order History)
+
+Fitur **Riwayat Order** telah berhasil diimplementasikan dengan sukses dan lolos uji build produksi Vite. Halaman ini menyediakan antarmuka modern (claymorphism) untuk melihat, mencari, memfilter, dan melihat rincian seluruh transaksi POS di Ogut-POS. Akses dibatasi khusus untuk staf ber-role **Admin** dan **Kasir**.
+
+---
+
+## Yang Telah Dicapai
+
+### 1. Database Layer: Supabase RPC
+- Membuat Postgres Function `get_order_history` dengan parameter dinamis (`p_start_date`, `p_end_date`, `p_payment_method`, `p_search`, `p_page`, `p_page_size`).
+- Mengoptimalkan performa data loading dengan cara menggabungkan (JOIN) item transaksi dan data menu menjadi nested JSON array (`items`) dalam satu request database saja.
+- Menangani kalkulasi **halaman total** (`total_pages`) dan **jumlah total record** (`total_count`) secara dinamis di server.
+
+### 2. Service Layer
+- Membuat file `features/orders/services/orderHistoryService.js` yang mengekspos fungsi `fetchOrderHistory()` untuk menjembatani React frontend dengan RPC database.
+
+### 3. Antarmuka Pengguna (UI) & Desain Premium
+- **Halaman Utama (`OrderHistoryPage.jsx`):**
+  - Desain mengikuti gaya premium (clay-card) dan palet warna Ogut-POS.
+  - Memiliki **Filter Waktu** berupa dua buah datepicker dengan proteksi presisi (start date diset ke awal hari `00:00:00` dan end date diset ke akhir hari `23:59:59` secara asinkron sebelum dikirim ke database).
+  - Memiliki **Filter Metode Pembayaran** interaktif berupa barisan tombol toggle (All, Cash, QRIS, Debit) yang responsif.
+  - Memiliki **Pencarian Nama Pelanggan** dengan performa tinggi berkat integrasi hook `useDebounce` (delay 300ms).
+- **Tabel Transaksi & Halaman Kosong (Empty State):**
+  - Menampilkan daftar transaksi yang rapi: ID (dibuat ringkas 8 karakter), Tanggal & Waktu lokal, Pelanggan, Nomor Meja (atau badge Take Away), Metode Pembayaran (badge ber-icon), dan Total Nominal.
+  - Jika tidak ada data yang cocok dengan kriteria filter, sistem akan memicu visualisasi empty state modern berupa ilustrasi dan instruksi pemulihan filter.
+- **Pagination Server-Side (`Pagination.jsx`):**
+  - Diatur default **10 item per halaman** sesuai permintaan Anda.
+  - Menghitung rentang item aktif (misalnya `Menampilkan 1-10 dari 159 Transaksi`).
+- **Modal Detail Transaksi (`OrderDetailModal.jsx`):**
+  - Menggunakan efek kaca/frosted glassmorphism (`backdrop-blur-md`).
+  - Menampilkan data lengkap berupa metadata pelanggan, nomor meja, metode pembayaran, list item menu (nama, qty, subtotal), dan total pembayaran.
+
+### 4. Proteksi Hak Akses & Navigasi
+- Mendaftarkan rute baru `/order-history` di `App.jsx` yang dilindungi oleh komponen `ProtectedRoute` dengan aturan hak akses `allowedRoles={['kasir', 'admin']}`.
+- Menambahkan menu baru "Riwayat Order" dengan icon `Receipt` yang menawan di `Sidebar.jsx`, dikondisikan agar **hanya tampil** untuk role **admin** dan **kasir**.
+
+---
+
+## Ringkasan File yang Dibuat & Dimodifikasi
+
+- **[NEW]** [orderHistoryService.js](file:///c:/laragon/www/Ogut-POS/frontend/src/features/orders/services/orderHistoryService.js) (Service fetching Supabase)
+- **[NEW]** [Pagination.jsx](file:///c:/laragon/www/Ogut-POS/frontend/src/features/orders/components/Pagination.jsx) (Komponen navigasi halaman)
+- **[NEW]** [OrderDetailModal.jsx](file:///c:/laragon/www/Ogut-POS/frontend/src/features/orders/components/OrderDetailModal.jsx) (Modal rincian transaksi)
+- **[NEW]** [OrderHistoryPage.jsx](file:///c:/laragon/www/Ogut-POS/frontend/src/pages/OrderHistoryPage.jsx) (Halaman dashboard riwayat transaksi)
+- **[MODIFY]** [App.jsx](file:///c:/laragon/www/Ogut-POS/frontend/src/App.jsx) (Registrasi route baru)
+- **[MODIFY]** [Sidebar.jsx](file:///c:/laragon/www/Ogut-POS/frontend/src/components/layout/Sidebar.jsx) (Navigasi menu sidebar)
+
+---
+
+## Hasil Uji Verifikasi
+
+1. **Vite Production Build:** Berhasil dikompilasi 100% sukses tanpa ada warning atau error impor:
+   ```bash
+   dist/assets/OrderHistoryPage-DxBtvatE.js    17.21 kB │ gzip:  4.49 kB
+   ✓ built in 7.32s
+   ```
+2. **Database:** Query RPC berjalan lancar dan mengembalikan JSON dengan nested items.
+3. **Role Check (Security):**
+   - User dengan role `admin` & `kasir` → Menu sidebar "Riwayat Order" **muncul**, halaman dapat diakses dengan sukses.
+   - User dengan role `manajemen_bahan` → Menu **tidak muncul**, jika mencoba mengakses langsung ke `/order-history`, didepak ke rute default (Access Denied).
