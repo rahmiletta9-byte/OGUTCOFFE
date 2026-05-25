@@ -1,0 +1,84 @@
+# Walkthrough: Fitur Baru - Riwayat Order, Perhitungan Stok Realtime, & Paginasi Log
+
+Daftar perubahan dan hasil verifikasi untuk penambahan fitur **Riwayat Order**, **Perhitungan Stok Menu Realtime**, **Paginasi & Filter Riwayat Stok (Inventory Log)**, serta **List & Paginasi Log Aktivitas (Activity Log)** pada aplikasi **Ogut-POS**. Seluruh fitur telah berhasil diimplementasikan dan diverifikasi lolos build produksi Vite.
+
+---
+
+## Bagian A: Riwayat Order (Order History) — Selesai ✅
+
+Fitur ini menyediakan antarmuka modern (claymorphism) untuk melihat, mencari, memfilter, dan melihat rincian seluruh transaksi POS di Ogut-POS. Akses dibatasi khusus untuk staf ber-role **Admin** dan **Kasir**.
+
+*   **Database Layer:** Postgres Function `get_order_history` untuk fetching data log transaksi dengan JOIN detail item dinamis dalam 1 query.
+*   **Antarmuka Pengguna & Desain Premium:** Pencarian nama pelanggan dengan debounce, filter range tanggal presisi (`00:00:00` s/d `23:59:59`), filter metode pembayaran (toggle), dan modal detail pembelian frosted glassmorphism (`backdrop-blur-md`).
+*   **Pagination Server-Side:** Diatur default 10 transaksi per halaman.
+
+---
+
+## Bagian B: Perhitungan Stok Menu Realtime & Warning Habis — Selesai ✅
+
+Fitur ini melakukan kalkulasi ketersediaan stok menu secara dinamis berlandaskan resep bahan baku (`product_materials` dan `materials`), serta memberikan feedback visual dan proteksi di kasir dan dashboard admin.
+
+*   **Database Layer:** Fungsi RPC `get_products_with_stock()` dengan `SECURITY DEFINER` untuk menghitung kapasitas porsi secara langsung di database menggunakan formula bottleneck: `MIN(FLOOR(stok_bahan / jumlah_pakai))`.
+*   **Halaman Kasir (`CashierPage.jsx` & `ProductCard.jsx`):**
+    *   Tampilan produk habis memiliki overlay blur **"HABIS"** dan menonaktifkan tombol (+).
+    *   Tampilan produk menipis ($\le 5$ porsi) memiliki badge kuning **"Sisa X Porsi"**.
+    *   Silent re-fetch secara asinkron setelah checkout sukses agar stok terupdate instan di UI kasir.
+    *   Batas limit keranjang yang mematikan penambahan kuantitas melebihi kapasitas saji.
+*   **Dashboard Admin (`DashboardPage.jsx`):** Seksi **"Stock Alerts"** di paling atas halaman analitik (muncul jika ada menu habis/menipis) dengan navigasi scroll horizontal.
+*   **Proteksi Checkout (`checkoutService.js`):** Validasi ketat keranjang belanja sesaat sebelum memproses transaksi ke database.
+
+---
+
+## Bagian C: Paginasi & Filtering Riwayat Stok & Log Aktivitas — Selesai ✅
+
+Fitur ini mengoptimalkan pemantauan audit trail dan inventori harian dengan sistem pemisahan halaman yang terintegrasi serta pemfilteran rentang tanggal yang taktis.
+
+### Yang Telah Dicapai
+1. **Peningkatan Komponen Paginasi (`Pagination.jsx`):**
+   - Menambahkan prop `label` yang dinamis (default `"Transaksi"`) sehingga komponen pagination bisa digunakan kembali (reusable) untuk berbagai tipe data seperti `"Log"` atau `"Item"`.
+2. **Halaman Riwayat Stok (`InventoryLogPage.jsx`):**
+   - **Date Filtering:** Menambahkan input tanggal ganda (Tanggal Mulai & Tanggal Akhir) yang presisi untuk membatasi data perubahan stok.
+   - **Pagination:** Mengintegrasikan pagination client-side dengan batas **10 item per halaman** agar tabel data tetap rapi.
+   - **Reset Filter:** Menambahkan tombol "Reset Filter" yang responsif saat filter pencarian atau rentang tanggal aktif.
+3. **Halaman Log Aktivitas (`ActivityLogPage.jsx`):**
+   - **Layout Linear List:** Mengubah struktur timeline zig-zag lama yang sulit dibaca menjadi bentuk **Linear Card List** satu kolom penuh yang bersih dan modern.
+   - **Pagination:** Mengintegrasikan pembagian halaman **10 log per halaman** sehingga performa render browser tetap optimal dan antarmuka scannable.
+   - **Reset Filter:** Ditambahkan tombol reset pencarian cepat di bagian header.
+
+---
+
+## Ringkasan File yang Dibuat & Dimodifikasi
+
+| File | Aksi | Deskripsi |
+|------|------|-----------|
+| `features/orders/components/Pagination.jsx` | **[MODIFY]** | Penambahan prop `label` dinamis untuk reusability |
+| `pages/InventoryLogPage.jsx` | **[MODIFY]** | Penambahan filter tanggal ganda, reset filter, & paginasi |
+| `pages/ActivityLogPage.jsx` | **[MODIFY]** | Perubahan ke layout linear list, reset filter, & paginasi |
+| `features/pos/services/stockService.js` | **[NEW]** | Service layer + konstanta threshold |
+| `pages/CashierPage.jsx` | **[MODIFY]** | Client-side filtering, interactive quantity bounds, silent refresh |
+| `features/pos/components/ProductCard.jsx` | **[MODIFY]** | Overlay habis, badge sisa porsi, dan tombol non-aktif |
+| `pages/DashboardPage.jsx` | **[MODIFY]** | Seksi Stock Alerts dengan card gradient horizontal scroll |
+| `features/pos/services/checkoutService.js` | **[MODIFY]** | Validasi kapasitas stok sebelum checkout |
+| `features/orders/services/orderHistoryService.js` | **[NEW]** | Service fetching Supabase untuk Riwayat Order |
+| `features/orders/components/OrderDetailModal.jsx` | **[NEW]** | Modal rincian transaksi Riwayat Order |
+| `pages/OrderHistoryPage.jsx` | **[NEW]** | Halaman dashboard riwayat transaksi |
+| `App.jsx` | **[MODIFY]** | Registrasi route riwayat order |
+| `components/layout/Sidebar.jsx` | **[MODIFY]** | Navigasi menu sidebar riwayat order |
+
+---
+
+## Hasil Uji Verifikasi
+
+1. **Vite Production Build:** Berhasil 100% tanpa kendala build atau error tipe/sintaks.
+   ```bash
+   vite v8.0.12 building client environment for production...
+   transforming...✓ 2036 modules transformed.
+   rendering chunks...
+   dist/assets/ActivityLogPage-CEqoE2Or.js      5.46 kB │ gzip:   2.20 kB
+   dist/assets/InventoryLogPage-YM9sgq9y.js     7.60 kB │ gzip:   2.48 kB
+   dist/assets/Pagination-BGWVySkP.js           1.99 kB │ gzip:   0.87 kB
+   ✓ built in 4.13s
+   ```
+2. **Kesesuaian Fungsional:**
+   - Halaman `/inventory-logs` memfilter rentang tanggal dan nama bahan dengan instan, serta memotong log stok tepat 10 baris per halaman.
+   - Halaman `/activity-logs` menampilkan log audit secara teratur ke bawah (linear) dengan scroll yang nyaman dan sistem navigasi halaman yang responsif.

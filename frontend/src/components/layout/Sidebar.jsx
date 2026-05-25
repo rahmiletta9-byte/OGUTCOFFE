@@ -1,6 +1,6 @@
 import React from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
-import { Coffee, ShoppingCart, LayoutGrid, Package, LogOut, ClipboardList, Users, Activity, History } from 'lucide-react';
+import { Coffee, ShoppingCart, LayoutGrid, Package, LogOut, ClipboardList, Users, Activity, History, Receipt } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import { useAuth } from '@/features/auth/context/AuthContext';
 import { supabase } from '@/lib/supabaseClient';
@@ -42,7 +42,10 @@ export default function Sidebar() {
 
       <nav className="flex-1 space-y-3">
         {(role === 'admin' || role === 'kasir') && (
-          <NavItem to="/pos" icon={ShoppingCart} label="POS Kasir" />
+          <>
+            <NavItem to="/pos" icon={ShoppingCart} label="POS Kasir" />
+            <NavItem to="/order-history" icon={Receipt} label="Riwayat Order" />
+          </>
         )}
         
         {role === 'admin' && (

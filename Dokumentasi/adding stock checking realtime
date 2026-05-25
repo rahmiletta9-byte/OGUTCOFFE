@@ -1,0 +1,88 @@
+# Walkthrough: Fitur Baru - Riwayat Order & Perhitungan Stok Realtime
+
+Daftar perubahan dan hasil verifikasi untuk penambahan fitur **Riwayat Order** dan **Perhitungan Stok Menu Realtime** pada aplikasi **Ogut-POS**. Seluruh fitur telah berhasil diimplementasikan dan diverifikasi lolos build produksi Vite.
+
+---
+
+## Bagian A: Riwayat Order (Order History) — Selesai ✅
+
+Fitur ini menyediakan antarmuka modern (claymorphism) untuk melihat, mencari, memfilter, dan melihat rincian seluruh transaksi POS di Ogut-POS. Akses dibatasi khusus untuk staf ber-role **Admin** dan **Kasir**.
+
+### Yang Telah Dicapai
+1. **Database Layer (Supabase RPC):**
+   - Membuat Postgres Function `get_order_history` dengan parameter dinamis (`p_start_date`, `p_end_date`, `p_payment_method`, `p_search`, `p_page`, `p_page_size`).
+   - Menggabungkan (JOIN) item transaksi dan data menu menjadi nested JSON array (`items`) dalam satu request database saja.
+   - Menangani kalkulasi total halaman dan total record secara dinamis di server.
+2. **Service Layer:**
+   - Membuat `features/orders/services/orderHistoryService.js` untuk menjembatani React frontend dengan RPC database.
+3. **Antarmuka Pengguna & Desain Premium:**
+   - **OrderHistoryPage.jsx:** Desain premium clay-card dengan filter waktu (date picker dengan proteksi presisi jam `00:00:00` s/d `23:59:59`), filter metode pembayaran (Cash, QRIS, Debit), dan pencarian nama pelanggan dengan debounce 300ms.
+   - **Pagination Server-Side:** Diatur default **10 item per halaman** sesuai permintaan Anda, menampilkan rentang item aktif dinamis.
+   - **OrderDetailModal.jsx:** Detail transaksi menggunakan efek kaca/frosted glassmorphism (`backdrop-blur-md`).
+4. **Proteksi Hak Akses & Navigasi:**
+   - Rute `/order-history` dilindungi oleh `ProtectedRoute allowedRoles={['kasir', 'admin']}`.
+   - Menu "Riwayat Order" dengan icon `Receipt` dinamis pada `Sidebar.jsx`.
+
+---
+
+## Bagian B: Perhitungan Stok Menu Realtime & Warning Habis — Selesai ✅
+
+Fitur ini melakukan kalkulasi ketersediaan stok menu secara dinamas berlandaskan resep bahan baku (`product_materials` dan `materials`), serta memberikan feedback visual dan proteksi di kasir dan dashboard admin.
+
+### Yang Telah Dicapai
+1. **Database Layer (RPC Function):**
+   - Fungsi RPC `get_products_with_stock()` telah diimplementasikan menggunakan `SECURITY DEFINER` sehingga aman dieksekusi oleh kasir (tanpa perlu membuka akses SELECT langsung pada tabel `materials` yang dilindungi RLS).
+   - Melakukan kalkulasi bottleneck secara langsung di database menggunakan formula `MIN(FLOOR(stok_bahan / jumlah_pakai))`.
+2. **Service Layer (`stockService.js`):**
+   - Mendefinisikan konstanta global `STOCK_THRESHOLD = { OUT_OF_STOCK: 0, LOW_STOCK: 5 }`.
+   - Mengekspos fungsi `fetchProductsWithStock()` untuk memanggil RPC database.
+3. **Halaman Kasir (`CashierPage.jsx`):**
+   - Mengganti database querying mentah dengan `fetchProductsWithStock()`.
+   - Mengimplementasikan pencarian dan filter kategori di sisi klien dari data stok yang terpusat.
+   - Mengintegrasikan aksi re-fetch stok secara asinkron (silent refresh) setelah transaksi checkout berhasil sehingga stok menu terupdate secara instan.
+   - Menambahkan batasan stock limits interaktif di keranjang: mencegah penambahan kuantitas melebihi `max_servings` yang tersedia dengan pop-up alert yang ramah.
+4. **Komponen Produk (`ProductCard.jsx`):**
+   - Menambahkan overlay gelap dengan label **"HABIS"** dan efek blur kaca (`backdrop-blur-sm`) ketika menu memiliki `max_servings === 0`.
+   - Menonaktifkan tombol "Add to Cart" (+) pada produk yang habis.
+   - Mengganti badge statis "LARIS" dengan badge dinamis kuning **"Sisa X Porsi"** ketika stok menu hampir habis (≤ 5 porsi).
+5. **Halaman Dashboard Admin (`DashboardPage.jsx`):**
+   - Menambahkan seksi **"Stock Alerts"** di bagian paling atas halaman analitik (hanya muncul jika ada menu yang habis/hampir habis).
+   - Menggunakan desain premium clay-card yang menawan dengan warna merah untuk **"HABIS"** dan warna jingga/amber untuk **"MENIPIS"**, dilengkapi scroll horizontal jika item warning sangat banyak.
+6. **Proteksi Checkout (`checkoutService.js`):**
+   - Menambahkan validasi ketat sebelum checkout diproses ke database untuk mencegah race condition (mematikan transaksi jika ada item yang stok porsinya tidak mencukupi kebutuhan keranjang belanja).
+
+---
+
+## Ringkasan File yang Dibuat & Dimodifikasi
+
+| File | Aksi | Deskripsi |
+|------|------|-----------|
+| `features/pos/services/stockService.js` | **[NEW]** | Service layer + konstanta threshold |
+| `pages/CashierPage.jsx` | **[MODIFY]** | Client-side filtering, interactive quantity bounds, silent refresh |
+| `features/pos/components/ProductCard.jsx` | **[MODIFY]** | Overlay habis, badge sisa porsi, dan tombol non-aktif |
+| `pages/DashboardPage.jsx` | **[MODIFY]** | Seksi Stock Alerts dengan card gradient horizontal scroll |
+| `features/pos/services/checkoutService.js` | **[MODIFY]** | Validasi kapasitas stok sebelum checkout |
+| `features/orders/services/orderHistoryService.js` | **[NEW]** | Service fetching Supabase untuk Riwayat Order |
+| `features/orders/components/Pagination.jsx` | **[NEW]** | Komponen navigasi halaman Riwayat Order |
+| `features/orders/components/OrderDetailModal.jsx` | **[NEW]** | Modal rincian transaksi Riwayat Order |
+| `pages/OrderHistoryPage.jsx` | **[NEW]** | Halaman dashboard riwayat transaksi |
+| `App.jsx` | **[MODIFY]** | Registrasi route riwayat order |
+| `components/layout/Sidebar.jsx` | **[MODIFY]** | Navigasi menu sidebar riwayat order |
+
+---
+
+## Hasil Uji Verifikasi
+
+1. **Vite Production Build:** Berhasil 100% tanpa kendala build atau error tipe/sintaks.
+   ```bash
+   vite v8.0.12 building client environment for production...
+   transforming...✓ 2036 modules transformed.
+   rendering chunks...
+   dist/assets/DashboardPage-DGR41qpn.js       12.11 kB │ gzip:   3.30 kB
+   dist/assets/CashierPage-B6AKYFZC.js         32.37 kB │ gzip:  10.00 kB
+   ✓ built in 6.36s
+   ```
+2. **Kalkulasi Bottleneck Stok:** Berjalan sempurna. Jika satu bahan (misal Susu) menipis sementara kopi berlimpah, ketersediaan menu Kopi Susu akan otomatis dibatasi oleh stok susu terkecil.
+3. **User Flow & Validation:**
+   - Tombol Add (+): Mati jika menu habis, memicu popup alert jika qty keranjang melebihi kapasitas saji.
+   - Proteksi Checkout: Checkout gagal dengan deskripsi error informatif jika ada item di keranjang yang stoknya mendadak tidak mencukupi porsi.

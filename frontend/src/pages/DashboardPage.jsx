@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabaseClient';
+import { fetchProductsWithStock } from '@/features/pos/services/stockService';
 import { 
   BarChart3, 
   TrendingUp, 
@@ -23,6 +24,7 @@ import DailyRevenueModal from '@/features/pos/components/DailyRevenueModal';
 export default function DashboardPage() {
   const [clusterData, setClusterData] = useState([]);
   const [predictionData, setPredictionData] = useState([]);
+  const [stockAlertProducts, setStockAlertProducts] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isRevenueModalOpen, setIsRevenueModalOpen] = useState(false);
 
@@ -41,6 +43,15 @@ export default function DashboardPage() {
           .select(`predicted_stock, materials ( name, unit, current_stock )`)
           .order('id', { ascending: false }).limit(8);
         if (predictions) setPredictionData(predictions);
+
+        // Fetch Stock Alert Products
+        try {
+          const products = await fetchProductsWithStock();
+          const alerts = products.filter(p => p.max_servings !== undefined && p.max_servings <= 5);
+          setStockAlertProducts(alerts);
+        } catch (stockErr) {
+          console.error("Stock alert data fetch error:", stockErr);
+        }
       } catch (err) {
         console.error("AI Data fetch error:", err);
       } finally {
@@ -49,6 +60,7 @@ export default function DashboardPage() {
     };
     fetchAIData();
   }, []);
+
   return (
     <div className="flex-1 w-full bg-background overflow-hidden font-sans text-foreground flex">
       {/* Main Analytics Content */}
@@ -82,6 +94,66 @@ export default function DashboardPage() {
               </Card>
           </div>
         </div>
+
+        {/* SEKSI ALERT: STOCK WARNINGS */}
+        {stockAlertProducts.length > 0 && (
+          <div className="mb-12">
+            <Card className="clay-card border-none overflow-hidden bg-gradient-to-r from-amber-500/10 via-destructive/5 to-amber-500/10 backdrop-blur-md border border-amber-500/20">
+              <CardContent className="p-8 space-y-6">
+                <div className="flex items-center justify-between">
+                  <h2 className="text-2xl font-black text-foreground flex items-center gap-4 tracking-tighter uppercase">
+                    <div className="bg-amber-500 p-2 rounded-xl text-white animate-pulse shadow-md">
+                      <AlertTriangle size={24} />
+                    </div>
+                    Stock Alerts
+                  </h2>
+                  <Badge variant="destructive" className="clay-badge animate-pulse bg-destructive text-destructive-foreground">
+                    ATTENTION REQUIRED
+                  </Badge>
+                </div>
+                
+                <div className="flex gap-6 overflow-x-auto pb-4 scrollbar-hide">
+                  {stockAlertProducts.map((product) => {
+                    const isOut = product.max_servings === 0;
+                    return (
+                      <div 
+                        key={product.id} 
+                        className={`min-w-[280px] p-6 rounded-[2rem] clay-card flex flex-col justify-between border transition-all hover:scale-102 ${
+                          isOut 
+                            ? 'bg-destructive/10 border-destructive/20 hover:bg-destructive/15' 
+                            : 'bg-amber-500/10 border-amber-500/20 hover:bg-amber-500/15'
+                        }`}
+                        style={{ boxShadow: 'none' }}
+                      >
+                        <div>
+                          <div className="flex items-start justify-between gap-4 mb-3">
+                            <h4 className="font-black text-foreground text-lg tracking-tight line-clamp-1 uppercase">{product.name}</h4>
+                            <Badge 
+                              variant={isOut ? "destructive" : "default"} 
+                              className={`clay-badge shrink-0 ${!isOut ? 'bg-amber-500 text-white' : ''}`}
+                            >
+                              {isOut ? 'HABIS' : 'MENIPIS'}
+                            </Badge>
+                          </div>
+                          <p className="text-[11px] text-muted-foreground font-bold uppercase tracking-widest">
+                            Category: {product.category}
+                          </p>
+                        </div>
+                        
+                        <div className="mt-6 flex items-baseline justify-between">
+                          <span className="text-[10px] text-muted-foreground font-black uppercase tracking-wider">Ketersediaan</span>
+                          <span className={`text-2xl font-black ${isOut ? 'text-destructive' : 'text-amber-600'}`}>
+                            {product.max_servings} Porsi
+                          </span>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        )}
 
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-10">
           
