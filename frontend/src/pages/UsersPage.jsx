@@ -16,27 +16,31 @@ export default function UsersPage() {
 
   const fetchUsers = async () => {
     setIsLoading(true);
-    // Kita memanggil function RPC yang sudah dibuat
+    // Memanggil RPC get_user_profiles sekali saja untuk diambil ke RAM client
     const { data, error } = await supabase.rpc('get_user_profiles');
     
     if (error) {
       console.error("Error fetching users:", error);
     } else {
-      let filtered = data || [];
-      if (searchQuery) {
-        filtered = filtered.filter(u => 
-          (u.email && u.email.toLowerCase().includes(searchQuery.toLowerCase())) ||
-          (u.role && u.role.toLowerCase().includes(searchQuery.toLowerCase()))
-        );
-      }
-      setUsers(filtered);
+      setUsers(data || []);
     }
     setIsLoading(false);
   };
 
+  // Hanya fetch data sekali saat component mounted (BUG-20)
   useEffect(() => {
     fetchUsers();
-  }, [searchQuery]);
+  }, []);
+
+  // Proses pencarian / filtering dilakukan di RAM (client-side) tanpa trigger DB RPC call
+  const filteredUsers = React.useMemo(() => {
+    if (!searchQuery) return users;
+    const query = searchQuery.toLowerCase();
+    return users.filter(u => 
+      (u.email && u.email.toLowerCase().includes(query)) ||
+      (u.role && u.role.toLowerCase().includes(query))
+    );
+  }, [users, searchQuery]);
 
   const handleSuccess = () => {
     setIsModalOpen(false);
@@ -80,9 +84,9 @@ export default function UsersPage() {
              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 animate-pulse">
                 {[...Array(6)].map((_, i) => <div key={i} className="h-40 bg-muted/30 rounded-[2rem]"></div>)}
              </div>
-          ) : users.length > 0 ? (
+          ) : filteredUsers.length > 0 ? (
             <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-              {users.map((item) => (
+              {filteredUsers.map((item) => (
                 <Card key={item.user_id} className="clay-card p-6 flex flex-col justify-between">
                   <div>
                     <div className="flex items-center gap-4 mb-4">

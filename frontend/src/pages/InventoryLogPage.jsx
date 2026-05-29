@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import PageHeader from '@/components/layout/PageHeader';
 import Pagination from '@/features/orders/components/Pagination';
+import useDebounce from '@/features/pos/hooks/useDebounce';
 
 export default function InventoryLogPage() {
   const [logs, setLogs] = useState([]);
@@ -18,36 +19,75 @@ export default function InventoryLogPage() {
   // State Pagination
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize] = useState(10);
+  const [totalCount, setTotalCount] = useState(0);
 
+  const debouncedSearch = useDebounce(searchQuery, 300);
+
+  // Ref untuk menghindari dobel fetch
+  const lastLoadedRef = React.useRef({ page: null, debouncedSearch: null, startDateStr: null, endDateStr: null });
+
+  // Trigger fetch data saat filter atau halaman berubah (BUG-08)
   useEffect(() => {
-    fetchLogs();
-  }, []);
+    const last = lastLoadedRef.current;
+    const filterChanged = last.debouncedSearch !== debouncedSearch ||
+                          last.startDateStr !== startDateStr ||
+                          last.endDateStr !== endDateStr;
 
-  // Reset page to 1 when filters change
-  useEffect(() => {
-    setCurrentPage(1);
-  }, [searchQuery, startDateStr, endDateStr]);
+    let pageToLoad = currentPage;
+    if (filterChanged) {
+      pageToLoad = 1;
+      setCurrentPage(1);
+    }
 
-  const fetchLogs = async () => {
+    if (filterChanged || currentPage !== last.page) {
+      fetchLogs(pageToLoad);
+      lastLoadedRef.current = {
+        page: pageToLoad,
+        debouncedSearch,
+        startDateStr,
+        endDateStr
+      };
+    }
+  }, [currentPage, debouncedSearch, startDateStr, endDateStr]);
+
+  const fetchLogs = async (pageParam) => {
     setIsLoading(true);
     try {
-      const { data, error } = await supabase
+      const pageToUse = pageParam !== undefined ? pageParam : currentPage;
+      const from = (pageToUse - 1) * pageSize;
+      const to = from + pageSize - 1;
+
+      let query = supabase
         .from('inventory_logs')
         .select(`
           id,
           date,
           stock_used,
           end_of_day_stock,
-          materials (
+          materials!inner (
             name,
             unit,
             category
           )
-        `)
-        .order('date', { ascending: false });
+        `, { count: 'exact' });
+
+      if (debouncedSearch) {
+        query = query.ilike('materials.name', `%${debouncedSearch}%`);
+      }
+      if (startDateStr) {
+        query = query.gte('date', startDateStr);
+      }
+      if (endDateStr) {
+        query = query.lte('date', endDateStr);
+      }
+
+      const { data, count, error } = await query
+        .order('date', { ascending: false })
+        .range(from, to);
 
       if (error) throw error;
-      if (data) setLogs(data);
+      setLogs(data || []);
+      setTotalCount(count || 0);
     } catch (error) {
       console.error("Gagal mengambil log inventory:", error);
     } finally {
@@ -62,31 +102,10 @@ export default function InventoryLogPage() {
     setCurrentPage(1);
   };
 
-  const filteredLogs = logs.filter(log => {
-    // 1. Search filter
-    const q = searchQuery.toLowerCase();
-    const materialName = log.materials?.name?.toLowerCase() || '';
-    const matchesSearch = !searchQuery || materialName.includes(q);
-
-    // 2. Date filter (log.date is 'YYYY-MM-DD')
-    let matchesDate = true;
-    if (startDateStr) {
-      matchesDate = matchesDate && log.date >= startDateStr;
-    }
-    if (endDateStr) {
-      matchesDate = matchesDate && log.date <= endDateStr;
-    }
-
-    return matchesSearch && matchesDate;
-  });
-
   // Pagination calculations
-  const totalCount = filteredLogs.length;
   const totalPages = Math.ceil(totalCount / pageSize);
-  const paginatedLogs = filteredLogs.slice(
-    (currentPage - 1) * pageSize,
-    currentPage * pageSize
-  );
+  const paginatedLogs = logs; // Karena sudah di-fetch ter-paginasi dari server
+
 
   return (
     <div className="flex-1 w-full bg-background overflow-hidden font-sans text-foreground flex animate-in fade-in duration-300">
@@ -182,12 +201,7 @@ export default function InventoryLogPage() {
                                         </div>
                                     </td>
                                     <td className="p-5">
-                                        <div className="flex items-center gap-3">
-                                            <div className="w-10 h-10 rounded-xl bg-primary/10 text-primary flex items-center justify-center font-black">
-                                                {log.materials?.name?.charAt(0) || '?'}
-                                            </div>
-                                            <span className="font-black text-foreground tracking-tight">{log.materials?.name || 'Unknown'}</span>
-                                        </div>
+                                        <span className="font-black text-foreground tracking-tight">{log.materials?.name || 'Unknown'}</span>
                                     </td>
                                     <td className="p-5">
                                         <Badge variant="outline" className="clay-badge uppercase text-[10px] tracking-widest">

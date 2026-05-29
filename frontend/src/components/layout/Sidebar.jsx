@@ -1,17 +1,16 @@
 import React from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
-import { Coffee, ShoppingCart, LayoutGrid, Package, LogOut, ClipboardList, Users, Activity, History, Receipt } from 'lucide-react';
+import { Coffee, ShoppingCart, LayoutGrid, Package, LogOut, ClipboardList, Users, Activity, History, Receipt, User } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import { useAuth } from '@/features/auth/context/AuthContext';
 import { supabase } from '@/lib/supabaseClient';
 
 export default function Sidebar() {
-  const { user, role } = useAuth();
+  const { user, role, logout } = useAuth();
   const navigate = useNavigate();
 
   const handleLogout = async () => {
-    await supabase.auth.signOut();
-    navigate('/login');
+    await logout();
   };
 
   const NavItem = ({ to, icon: Icon, label }) => (
@@ -66,6 +65,9 @@ export default function Sidebar() {
             <NavItem to="/activity-logs" icon={Activity} label="Log Aktivitas" />
           </>
         )}
+        
+        {/* Profil Terbuka untuk Semua Role */}
+        <NavItem to="/profile" icon={User} label="Profil Saya" />
       </nav>
 
       {user && (

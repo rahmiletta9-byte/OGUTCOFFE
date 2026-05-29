@@ -17,18 +17,23 @@ export default function UserManager({ onSuccess }) {
     setIsLoading(true);
 
     try {
-      const { data: authData, error: authError } = await supabase.auth.signUp({
-        email: formData.email,
-        password: formData.password,
+      const flaskApiUrl = import.meta.env.VITE_FLASK_API_URL || 'http://127.0.0.1:5000';
+      const response = await fetch(`${flaskApiUrl}/api/admin/create-user`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-API-Key': import.meta.env.VITE_INTERNAL_API_KEY || ''
+        },
+        body: JSON.stringify({
+          email: formData.email,
+          password: formData.password,
+          role: formData.role
+        })
       });
 
-      if (authError) throw authError;
-
-      if (authData.user) {
-        const { error: roleError } = await supabase.from('user_roles').insert([
-          { user_id: authData.user.id, role: formData.role }
-        ]);
-        if (roleError) throw roleError;
+      const resData = await response.json();
+      if (!response.ok) {
+        throw new Error(resData.error || 'Terjadi kesalahan saat membuat staf baru');
       }
 
       await logActivity(user.id, 'CREATE_USER', `Mendaftarkan staf baru: ${formData.email}`);

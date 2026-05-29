@@ -15,6 +15,7 @@ const InventoryLogPage = lazy(() => import('@/pages/InventoryLogPage'));
 const UsersPage = lazy(() => import('@/pages/UsersPage'));
 const MenuPage = lazy(() => import('@/pages/MenuPage'));
 const ActivityLogPage = lazy(() => import('@/pages/ActivityLogPage'));
+const ProfilePage = lazy(() => import('@/pages/ProfilePage'));
 
 // Komponen Loading Skeleton
 const PageLoader = () => (
@@ -87,6 +88,13 @@ export default function App() {
               <Route path="/activity-logs" element={
                 <ProtectedRoute allowedRoles={['admin']}>
                   <ActivityLogPage />
+                </ProtectedRoute>
+              } />
+
+              {/* Rute Profil Pengguna (Semua Role Terautentikasi) */}
+              <Route path="/profile" element={
+                <ProtectedRoute allowedRoles={['admin', 'kasir', 'manajemen_bahan']}>
+                  <ProfilePage />
                 </ProtectedRoute>
               } />
             </Route>

@@ -75,6 +75,19 @@ export const AuthProvider = ({ children }) => {
     };
   }, []);
 
+  const logout = async () => {
+    setLoading(true);
+    try {
+      await supabase.auth.signOut();
+    } catch (err) {
+      console.error("AuthContext: Error during signOut:", err);
+    } finally {
+      setUser(null);
+      setRole(null);
+      setLoading(false);
+    }
+  };
+
   // KUNCI: Block semua rendering (children) selama loading masih true
   if (loading) {
     return (
@@ -90,10 +103,11 @@ export const AuthProvider = ({ children }) => {
   }
 
   return (
-    <AuthContext.Provider value={{ user, role, loading }}>
+    <AuthContext.Provider value={{ user, role, loading, logout }}>
       {children}
     </AuthContext.Provider>
   );
 };
 
 export const useAuth = () => useContext(AuthContext);
+

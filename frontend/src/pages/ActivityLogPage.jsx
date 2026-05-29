@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import PageHeader from '@/components/layout/PageHeader';
 import Pagination from '@/features/orders/components/Pagination';
+import useDebounce from '@/features/pos/hooks/useDebounce';
 
 export default function ActivityLogPage() {
   const [logs, setLogs] = useState([]);
@@ -16,22 +17,50 @@ export default function ActivityLogPage() {
   // State Pagination
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize] = useState(10);
+  const [totalCount, setTotalCount] = useState(0);
 
+  const debouncedSearch = useDebounce(searchQuery, 300);
+
+  // Ref untuk menghindari dobel fetch
+  const lastLoadedRef = React.useRef({ page: null, debouncedSearch: null });
+
+  // Trigger fetch data saat filter atau halaman berubah (BUG-09)
   useEffect(() => {
-    fetchLogs();
-  }, []);
+    const last = lastLoadedRef.current;
+    const filterChanged = last.debouncedSearch !== debouncedSearch;
 
-  // Reset page to 1 when search query changes
-  useEffect(() => {
-    setCurrentPage(1);
-  }, [searchQuery]);
+    let pageToLoad = currentPage;
+    if (filterChanged) {
+      pageToLoad = 1;
+      setCurrentPage(1);
+    }
 
-  const fetchLogs = async () => {
+    if (filterChanged || currentPage !== last.page) {
+      fetchLogs(pageToLoad);
+      lastLoadedRef.current = {
+        page: pageToLoad,
+        debouncedSearch
+      };
+    }
+  }, [currentPage, debouncedSearch]);
+
+  const fetchLogs = async (pageParam) => {
     setIsLoading(true);
     try {
-      const { data, error } = await supabase.rpc('get_activity_logs');
+      const pageToUse = pageParam !== undefined ? pageParam : currentPage;
+      
+      const { data, error } = await supabase.rpc('get_activity_logs_paginated', {
+        p_page: pageToUse,
+        p_page_size: pageSize,
+        p_search: debouncedSearch || null
+      });
+
       if (error) throw error;
-      if (data) setLogs(data);
+      setLogs(data || []);
+      
+      // Ambil total_count dari baris pertama jika ada
+      const count = data && data.length > 0 ? parseInt(data[0].total_count) : 0;
+      setTotalCount(count);
     } catch (error) {
       console.error("Gagal mengambil log aktivitas:", error);
     } finally {
@@ -39,22 +68,10 @@ export default function ActivityLogPage() {
     }
   };
 
-  const filteredLogs = logs.filter(log => {
-    const q = searchQuery.toLowerCase();
-    return (
-      (log.description && log.description.toLowerCase().includes(q)) ||
-      (log.action_type && log.action_type.toLowerCase().includes(q)) ||
-      (log.user_email && log.user_email.toLowerCase().includes(q))
-    );
-  });
-
   // Pagination calculations
-  const totalCount = filteredLogs.length;
   const totalPages = Math.ceil(totalCount / pageSize);
-  const paginatedLogs = filteredLogs.slice(
-    (currentPage - 1) * pageSize,
-    currentPage * pageSize
-  );
+  const paginatedLogs = logs; // Karena sudah di-fetch ter-paginasi dari server
+
 
   const getActionColor = (type) => {
     const action = type?.toUpperCase() || '';

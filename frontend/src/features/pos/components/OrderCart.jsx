@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { ShoppingCart, Minus, Plus, Trash2, Banknote, QrCode, CreditCard, User, Hash, ArrowLeft, ArrowRight } from 'lucide-react';
+import { ShoppingCart, Minus, Plus, Trash2, Banknote, QrCode, CreditCard, User, Hash, ArrowLeft, ArrowRight, Coffee } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
@@ -70,7 +70,13 @@ export default function OrderCart({
                   }}
                 >
                   <Card className="h-14 w-14 rounded-xl overflow-hidden flex-shrink-0" style={{boxShadow: 'none', borderRadius: '0.75rem'}}>
-                    <img src={item.image_url} alt={item.name} className="w-full h-full object-cover" />
+                    {item.image_url ? (
+                      <img src={item.image_url} alt={item.name} className="w-full h-full object-cover" />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center bg-muted/20">
+                        <Coffee size={20} className="text-muted-foreground/30" />
+                      </div>
+                    )}
                   </Card>
                   
                   <div className="flex-1 min-w-0">

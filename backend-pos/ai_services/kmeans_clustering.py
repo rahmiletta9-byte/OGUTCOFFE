@@ -62,10 +62,12 @@ def run_kmeans():
         }
 
         def get_label(c):
-            if c == best_cluster: return 'Laris & Untung Besar'
-            elif n_clusters == 3 and c == worst_cluster: return 'Kurang Laris'
-            elif n_clusters == 2 and c == worst_cluster: return 'Menengah'
-            else: return 'Menengah'
+            if c == best_cluster: 
+                return 'Laris & Untung Besar'
+            elif c == worst_cluster: 
+                return 'Kurang Laris'
+            else: 
+                return 'Menengah'
 
         agg_df['label'] = agg_df['cluster'].apply(get_label)
 

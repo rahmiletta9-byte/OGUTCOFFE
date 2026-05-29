@@ -1,53 +1,42 @@
 import { supabase } from '@/lib/supabaseClient';
+import { logActivity } from '@/lib/logger';
+
 
 export const processCheckout = async (cartItems, totalAmount, paymentMethod, customerName = '', tableNumber = '') => {
   try {
-    // 0. Validasi stok sebelum checkout
-    const insufficientStockItems = cartItems.filter(item =>
-      item.max_servings !== undefined && (item.max_servings <= 0 || item.qty > item.max_servings)
-    );
-    if (insufficientStockItems.length > 0) {
-      const details = insufficientStockItems.map(i => 
-        i.max_servings <= 0 
-          ? `${i.name} (HABIS)` 
-          : `${i.name} (Tersedia: ${i.max_servings}, Dipesan: ${i.qty})`
-      ).join(', ');
-      throw new Error(`Stok bahan tidak mencukupi untuk menu: ${details}`);
-    }
-
-    // 1. Catat Header Transaksi ke Supabase
-    const transactionPayload = { 
-      total_amount: totalAmount,
-      payment_method: paymentMethod,
-    };
-    if (customerName.trim()) transactionPayload.customer_name = customerName.trim();
-    if (tableNumber.trim()) transactionPayload.table_number = tableNumber.trim();
-
-    const { data: trxData, error: trxError } = await supabase
-      .from('transactions')
-      .insert([transactionPayload])
-      .select('id')
-      .single();
-
-    if (trxError) throw trxError;
-
-    // 2. Siapkan detail pesanan (termasuk kalkulasi profit statis)
-    const transactionId = trxData.id;
-    const orderDetails = cartItems.map(item => ({
-      transaction_id: transactionId,
+    // Siapkan payload produk untuk dikirim ke RPC database
+    const itemsPayload = cartItems.map(item => ({
       product_id: item.id,
-      quantity: item.qty,
-      subtotal: (item.price || 0) * item.qty,
-      // profit_margin = (harga jual - harga modal) * qty
-      profit_margin: ((item.price || 0) - (item.cost_price || 0)) * item.qty
+      qty: item.qty,
+      price: item.price || 0,
+      cost_price: item.cost_price || 0
     }));
 
-    // 3. Catat Item Transaksi (Bulk Insert)
-    const { error: itemsError } = await supabase
-      .from('transaction_items')
-      .insert(orderDetails);
+    // Panggil stored procedure process_checkout secara atomik
+    const { data, error } = await supabase.rpc('process_checkout', {
+      p_items: itemsPayload,
+      p_total: totalAmount,
+      p_payment: paymentMethod,
+      p_customer: customerName.trim() || null,
+      p_table: tableNumber.trim() || null
+    });
 
-    if (itemsError) throw itemsError;
+    if (error) throw error;
+
+    // Periksa apakah stored procedure mengembalikan status sukses
+    if (data && !data.success) {
+      throw new Error(data.error || 'Gagal memproses checkout (kemungkinan stok bahan baku habis)');
+    }
+
+    // 3.5. CATAT AKTIVITAS CHECKOUT
+    const { data: { session } } = await supabase.auth.getSession();
+    if (session?.user) {
+      logActivity(
+        session.user.id,
+        'CHECKOUT',
+        `Transaksi senilai Rp ${totalAmount.toLocaleString('id-ID')} (${paymentMethod}) - ${cartItems.length} item`
+      ).catch(err => console.error("Failed to log activity:", err));
+    }
 
     // 4. FIRE-AND-FORGET KE FLASK (AI N-GRAM)
     // Menggunakan fetch asinkron tanpa 'await' agar UI tetap responsif
@@ -55,7 +44,10 @@ export const processCheckout = async (cartItems, totalAmount, paymentMethod, cus
     if (flaskApiUrl) {
       fetch(`${flaskApiUrl}/api/ngram/increment`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          'X-API-Key': import.meta.env.VITE_INTERNAL_API_KEY || ''
+        },
         body: JSON.stringify({ 
           items: cartItems.map(item => item.name) 
         })

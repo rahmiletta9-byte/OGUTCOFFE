@@ -40,10 +40,13 @@ def run_regression():
             model = LinearRegression()
             model.fit(X, y)
 
-            # Hitung MAPE (Tingkat Error)
+            # Menghitung MAPE secara akurat dengan menyaring y == 0 (menghindari pembagian nol)
             y_pred_train = model.predict(X)
-            # Hindari pembagian dengan nol
-            mape = mean_absolute_percentage_error(y + 0.001, y_pred_train) * 100 
+            mask = y > 0
+            if mask.sum() > 0:
+                mape = mean_absolute_percentage_error(y[mask], y_pred_train[mask]) * 100
+            else:
+                mape = 0.0
 
             # 4. Prediksi KONSUMSI 7 Hari ke Depan
             future_days = np.array(range(len(mat_df) + 1, len(mat_df) + 8)).reshape(-1, 1)

@@ -1,27 +1,108 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-    <title>N-Gram Cache View - Ogut Coffee</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RAM Cache Monitor - Ogut Coffee</title>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;700;800&family=Outfit:wght@600;800;900&display=swap" rel="stylesheet">
     <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Plus Jakarta Sans', 'sans-serif'],
+                        outfit: ['Outfit', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        .clay-card {
+            background: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.03),
+                        inset 0 2px 4px 0 rgba(255, 255, 255, 0.9);
+            border-radius: 2rem;
+        }
+        .clay-button {
+            border-radius: 1.5rem;
+            box-shadow: 0 4px 10px 0 rgba(0, 0, 0, 0.02),
+                        inset 0 2px 3px 0 rgba(255, 255, 255, 0.8);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .clay-button:active {
+            transform: scale(0.97);
+        }
+    </style>
 </head>
-<body class="bg-slate-100 p-8">
-    <div class="max-w-4xl mx-auto bg-white p-6 rounded-xl shadow-md">
-        <div class="flex justify-between items-center mb-6">
-            <h1 class="text-2xl font-bold">🧠 Pemantauan Memori N-Gram (RAM)</h1>
-            <a href="/admin/dashboard" class="text-blue-600 hover:underline font-semibold">← Kembali</a>
+<body class="bg-[#fafaf9] min-h-screen font-sans text-slate-800 p-6 md:p-12 selection:bg-amber-100 selection:text-amber-800">
+    <div class="max-w-4xl mx-auto space-y-8 animate-in fade-in duration-300">
+        
+        <!-- Header Page -->
+        <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 border-b border-slate-200/60 pb-6">
+            <div>
+                <span class="text-[10px] font-extrabold uppercase tracking-[0.25em] text-amber-600 font-outfit">Sistem Caching Memori</span>
+                <h1 class="text-3xl font-black text-slate-900 font-outfit tracking-tighter uppercase mt-1">RAM Cache Monitor</h1>
+            </div>
+            
+            <a href="/admin/dashboard" class="clay-button bg-white border border-slate-200/60 text-slate-700 hover:bg-slate-50 hover:text-slate-900 px-6 py-3.5 font-bold uppercase tracking-wider text-xs flex items-center justify-center">
+                Kembali
+            </a>
         </div>
 
-        <p class="mb-4">Total Menu dalam Cache: <b>{{ stats.total_items }}</b></p>
+        <!-- Metric Section -->
+        <div class="clay-card p-6 md:p-8 flex items-center justify-between gap-6 border border-amber-200/40 bg-gradient-to-br from-amber-500/5 to-transparent">
+            <div>
+                <h4 class="text-sm font-black text-slate-900 font-outfit uppercase tracking-tight">Kapasitas RAM N-Gram</h4>
+                <p class="text-xs text-slate-500 mt-1 leading-relaxed">Menampilkan total menu yang terindeks dan skor popularitas akumulasi klik pencarian kasir yang tersimpan secara real-time di memori.</p>
+            </div>
+            <div class="text-right shrink-0">
+                <span class="text-[9px] font-extrabold uppercase tracking-widest text-amber-600 block opacity-80">Total Menu Terindeks</span>
+                <span class="text-4xl font-black text-amber-600 tracking-tighter font-outfit mt-1 block">{{ stats.total_items }} <span class="text-xs text-slate-400 font-bold tracking-normal">Items</span></span>
+            </div>
+        </div>
 
-        <table class="w-full text-left border">
-            <tr class="bg-slate-100 border-b"><th class="p-2">Nama Menu</th><th class="p-2">Skor Popularitas (Hits)</th></tr>
-            {% for nama, skor in stats.data.items() %}
-            <tr class="border-b">
-                <td class="p-2">{{ nama }}</td>
-                <td class="p-2 font-mono text-orange-600">{{ skor }}</td>
-            </tr>
-            {% endfor %}
-        </table>
+        <!-- Data Table Card -->
+        <div class="clay-card overflow-hidden border border-slate-200/50 shadow-sm">
+            <div class="overflow-x-auto">
+                <table class="w-full text-left border-collapse">
+                    <thead>
+                        <tr class="bg-slate-100/50 border-b border-slate-200/60">
+                            <th class="p-6 font-black uppercase tracking-widest text-xs text-slate-500 w-16">No</th>
+                            <th class="p-6 font-black uppercase tracking-widest text-xs text-slate-500">Nama Menu</th>
+                            <th class="p-6 font-black uppercase tracking-widest text-xs text-slate-500 text-right">Skor Popularitas (Hits)</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-slate-100">
+                        {% for nama, skor in stats.data.items() %}
+                        <tr class="hover:bg-slate-50/50 transition-colors group">
+                            <td class="p-6 text-sm font-bold text-slate-400">
+                                {{ loop.index }}
+                            </td>
+                            <td class="p-6">
+                                <span class="font-extrabold text-slate-900 tracking-tight text-sm uppercase">
+                                    {{ nama }}
+                                </span>
+                            </td>
+                            <td class="p-6 text-right">
+                                <span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-black uppercase tracking-widest {% if skor > 0 %}bg-amber-50 text-amber-700 border border-amber-200/60{% else %}bg-slate-100 text-slate-400 border border-slate-200/40{% endif %} font-mono">
+                                    {{ skor }}
+                                </span>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
     </div>
 </body>
 </html>
