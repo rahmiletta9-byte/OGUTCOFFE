@@ -1,0 +1,94 @@
+# Walkthrough: Fitur Baru & Perombakan Desain Estetika Ogut-POS
+
+Daftar perubahan dan hasil verifikasi untuk penambahan seluruh fitur utama dan perombakan total visual pada aplikasi **Ogut-POS**. Seluruh fitur telah berhasil diimplementasikan dan diverifikasi lolos pengujian fungsional serta build produksi Vite.
+
+---
+
+## Bagian A: Riwayat Order (Order History) — Selesai ✅
+
+*   **Database Layer:** Postgres Function `get_order_history` untuk fetching data log transaksi dengan JOIN detail item dinamis dalam 1 query.
+*   **Antarmuka Pengguna & Desain Premium:** Pencarian nama pelanggan dengan debounce, filter range tanggal presisi (`00:00:00` s/d `23:59:59`), filter metode pembayaran (toggle), dan modal detail pembelian frosted glassmorphism (`backdrop-blur-md`).
+*   **Pagination Server-Side:** Diatur default 10 transaksi per halaman.
+
+---
+
+## Bagian B: Perhitungan Stok Menu Realtime & Warning Habis — Selesai ✅
+
+*   **Database Layer:** Fungsi RPC `get_products_with_stock()` dengan `SECURITY DEFINER` untuk menghitung kapasitas porsi secara langsung di database menggunakan formula bottleneck: `MIN(FLOOR(stok_bahan / jumlah_pakai))`.
+*   **Halaman Kasir (`CashierPage.jsx` & `ProductCard.jsx`):**
+    *   Tampilan produk habis memiliki overlay blur **"HABIS"** dan menonaktifkan tombol (+).
+    *   Tampilan produk hampir habis ($\le 5$ porsi) memiliki badge kuning **"Sisa X Porsi"**.
+    *   **Tampilan produk normal (> 5 porsi):** Menampilkan badge hijau zamrud (emerald) **"Tersedia: X Porsi"** sehingga kasir dapat memantau kuantitas porsi secara langsung untuk semua menu!
+    *   **Penyelesaian Dummy Image:** Mengganti fallback image cangkir kopi yang menyesatkan pada makanan/non-kopi dengan **placeholder icon minimalis modern** yang disesuaikan dengan kategori menu (`Coffee` untuk kopi, `Utensils` untuk makanan, dan `CupSoda` untuk minuman non-kopi) yang dibalut soft claymorphic gradient background.
+    *   Silent re-fetch secara asinkron setelah checkout sukses agar stok terupdate instan di UI kasir.
+    *   Batas limit keranjang yang mematikan penambahan kuantitas melebihi kapasitas saji.
+*   **Dashboard Admin (`DashboardPage.jsx`):** Seksi **"Stock Alerts"** di paling atas halaman analitik (muncul jika ada menu habis/menipis) dengan navigasi scroll horizontal.
+*   **Proteksi Checkout (`checkoutService.js`):** Validasi kapasitas stok sebelum memproses transaksi.
+
+---
+
+## Bagian C: Paginasi & Filtering Riwayat Stok & Log Aktivitas — Selesai ✅
+
+1. **Peningkatan Komponen Paginasi (`Pagination.jsx`):**
+   - Menambahkan prop `label` yang dinamis sehingga komponen pagination bisa digunakan kembali (reusable) untuk berbagai tipe data seperti `"Log"` atau `"Item"`.
+2. **Halaman Riwayat Stok (`InventoryLogPage.jsx`):**
+   - **Date Filtering:** Menambahkan input tanggal ganda untuk membatasi data perubahan stok.
+   - **Pagination:** Mengintegrasikan pagination client-side dengan batas **10 item per halaman** agar tabel data tetap rapi.
+   - **Reset Filter:** Menambahkan tombol "Reset Filter" yang responsif saat filter pencarian atau rentang tanggal aktif.
+3. **Halaman Log Aktivitas (`ActivityLogPage.jsx`):**
+   - **Layout Linear List:** Mengubah struktur timeline zig-zag lama yang sulit dibaca menjadi bentuk **Linear Card List** satu kolom penuh yang bersih dan modern.
+   - **Pagination:** Mengintegrasikan pembagian halaman **10 log per halaman** sehingga performa render browser tetap optimal dan antarmuka scannable.
+   - **Reset Filter:** Ditambahkan tombol reset pencarian cepat di bagian header.
+
+---
+
+## Bagian D: Redesain Estetika Total Backend Flask Admin Panel — Selesai ✅
+
+Keseluruhan antarmuka **Flask IT Control Panel** di `backend-pos` kini telah dirombak total secara profesional ke dalam bentuk **Premium Claymorphism & Glassmorphism** yang mewah, sangat selaras dengan kualitas desain frontend Ogut-POS.
+
+### Yang Telah Dicapai
+1.  **Halaman Login Kaca Melayang (`login.html`):**
+    -   Mengubah form login primitif menjadi kartu **glassmorphic transparan** dengan efek *backdrop-blur* tebal yang melayang di atas latar belakang gradien pastel hangat.
+    -   Menggunakan input text claymorphic bersudut melengkung (`rounded-[1.25rem]`) yang dinamis dan focus ring berwarna amber/emas yang menawan.
+2.  **Halaman Panel Kontrol Utama (`dashboard.html`):**
+    -   Navigasi atas dirombak penuh menjadi tombol navigasi claymorphic berkelas.
+    -   **Server Status Indicator:** Ditambahkan indikator kesehatan server detak nadi (**pulsing green dot**) dengan background hijau gradasi pastel lembut.
+    -   Mendesain kartu informasi scheduler AI harian yang rapi dan panel tombol aksi "Force Run AI" berwarna rose premium dengan pesan peringatan keamanan yang informatif.
+3.  **Halaman RAM Cache Monitor (`ngram_view.html`):**
+    -   Menyusun kembali tabel data mentah lama ke dalam struktur tabel **clay-card** minimalis modern yang sangat scannable dan rapi.
+    -   Menambahkan panel ringkasan kapasitas hits dan total menu terindeks di RAM dalam bentuk teks besar tracking font-outfit yang tebal.
+4.  **Halaman AI Reasoning (`ai_reasoning.html`):**
+    -   Interactive tabs untuk bernavigasi cepat di antara tiga algoritma: **K-Means**, **Linear Regression**, dan **RAM N-Gram Suggestions**.
+    -   Bagan alir (flowchart) CSS/HTML interaktif yang memetakan masukan data, tahapan transformasi, pengolahan model, evaluasi, hingga hasil akhir yang disimpan ke database.
+
+---
+
+## Ringkasan File yang Dibuat & Dimodifikasi
+
+| File | Aksi | Deskripsi |
+|------|------|-----------|
+| `backend-pos/templates/login.html` | **[MODIFY]** | Perombakan total visual halaman login (glassmorphic card, soft gradients, clay inputs) |
+| `backend-pos/templates/dashboard.html` | **[MODIFY]** | Perombakan total visual panel kontrol (pulsing green server status, premium action cards) |
+| `backend-pos/templates/ngram_view.html` | **[MODIFY]** | Perombakan total visual pemantauan RAM N-Gram (clay table, bold metrics summary) |
+| `backend-pos/templates/ai_reasoning.html` | **[MODIFY]** | Redesain total halaman arsitektur AI dengan diagram alir interaktif & tab navigasi |
+| `backend-pos/Dokumentasi_Arsitektur_AI.md` | **[NEW]** | Dokumen arsitektur teknis lengkap subsistem AI (Mermaid JS, rumus, database) |
+| `features/orders/components/Pagination.jsx` | **[MODIFY]** | Penambahan prop `label` dinamis untuk reusability |
+| `pages/InventoryLogPage.jsx` | **[MODIFY]** | Penambahan filter tanggal ganda, reset filter, & paginasi |
+| `pages/ActivityLogPage.jsx` | **[MODIFY]** | Perubahan ke layout linear list, reset filter, & paginasi |
+| `features/pos/components/ProductCard.jsx` | **[MODIFY]** | Implementasi dynamic stock count & dynamic minimalist category placeholder icons |
+| `features/pos/services/stockService.js` | **[NEW]** | Service layer + konstanta threshold |
+| `pages/CashierPage.jsx` | **[MODIFY]** | Client-side filtering, interactive quantity bounds, silent refresh |
+| `pages/DashboardPage.jsx` | **[MODIFY]** | Seksi Stock Alerts dengan card gradient horizontal scroll |
+| `features/pos/services/checkoutService.js` | **[MODIFY]** | Validasi kapasitas stok sebelum checkout |
+| `features/orders/services/orderHistoryService.js` | **[NEW]** | Service fetching Supabase untuk Riwayat Order |
+| `features/orders/components/OrderDetailModal.jsx` | **[NEW]** | Modal rincian transaksi Riwayat Order |
+| `pages/OrderHistoryPage.jsx` | **[NEW]** | Halaman dashboard riwayat transaksi |
+| `App.jsx` | **[MODIFY]** | Registrasi route riwayat order |
+| `components/layout/Sidebar.jsx` | **[MODIFY]** | Navigasi menu sidebar riwayat order |
+
+---
+
+## Hasil Uji Verifikasi
+
+1. **Flask API Web Server:** Berhasil teruji online dan melayani endpoint fungsional dengan sempurna.
+2. **Kesesuaian Desain:** Seluruh berkas template HTML (`login`, `dashboard`, `ngram_view`, `ai_reasoning`) memuat dengan responsif, memiliki visual yang modern dan konsisten 100% dengan standar UI premium Ogut-POS.

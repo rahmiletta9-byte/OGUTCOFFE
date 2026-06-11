@@ -1,13 +1,38 @@
+import json
+import os
 from config.supabase_client import db
 
 # Ini adalah memori RAM utama kita (Dictionary)
 # Format: {"Kopi Susu Gula Aren": 150, "Kentang Goreng": 85}
 NGRAM_DATA = {}
+BACKUP_FILE = 'ngram_backup.json'
+
+def save_ngram_to_file():
+    """Menyimpan data N-Gram dari RAM ke file JSON lokal."""
+    global NGRAM_DATA
+    try:
+        with open(BACKUP_FILE, 'w', encoding='utf-8') as f:
+            json.dump(NGRAM_DATA, f, ensure_ascii=False, indent=2)
+    except Exception as e:
+        print("Gagal menyimpan backup N-Gram:", e)
 
 def load_initial_data():
-    """Menarik daftar menu dasar dari Supabase saat server pertama kali menyala."""
+    """Memuat data N-Gram dari backup file lokal dan menggabungkan dengan produk dari Supabase."""
     global NGRAM_DATA
-    print("Memuat data awal N-Gram dari Supabase...")
+    
+    # 1. Coba muat dari file backup lokal
+    if os.path.exists(BACKUP_FILE):
+        print(f"Memuat data N-Gram dari file backup {BACKUP_FILE}...")
+        try:
+            with open(BACKUP_FILE, 'r', encoding='utf-8') as f:
+                NGRAM_DATA = json.load(f)
+            print(f"Berhasil memuat {len(NGRAM_DATA)} data dari backup.")
+        except Exception as e:
+            print("Gagal membaca file backup N-Gram, memulai dengan data kosong:", e)
+            NGRAM_DATA = {}
+            
+    # 2. Sinkronkan dengan menu dasar dari Supabase
+    print("Mensinkronkan data N-Gram dengan menu dasar dari Supabase...")
     try:
         response = db.table('products').select('name').execute()
         products = response.data
@@ -16,9 +41,10 @@ def load_initial_data():
             if name and name not in NGRAM_DATA:
                 # Beri skor 0 sebagai awalan jika belum ada
                 NGRAM_DATA[name] = 0
-        print(f"Berhasil memuat {len(NGRAM_DATA)} menu ke dalam RAM.")
+        print(f"Sinkronisasi selesai. Total menu dalam RAM: {len(NGRAM_DATA)}.")
+        save_ngram_to_file()
     except Exception as e:
-        print("Gagal memuat data awal N-Gram:", e)
+        print("Gagal sinkronisasi data awal N-Gram dengan Supabase:", e)
 
 def get_suggestions(query):
     """Mencari menu berdasarkan kata kunci dan mengurutkannya berdasarkan skor tertinggi."""
@@ -47,6 +73,9 @@ def increment_frequency(items_list):
             NGRAM_DATA[item] += 1
         else:
             NGRAM_DATA[item] = 1
+            
+    # Simpan hasil perubahan skor ke file lokal
+    save_ngram_to_file()
 
 def get_memory_stats():
     """Mengembalikan isi RAM saat ini untuk dipantau Admin"""

@@ -1,0 +1,91 @@
+# Walkthrough: Fitur Baru - Riwayat Order, Perhitungan Stok Realtime, Paginasi Log, & Arsitektur AI
+
+Daftar perubahan dan hasil verifikasi untuk penambahan seluruh fitur utama dan optimasi visual pada aplikasi **Ogut-POS**. Seluruh fitur telah berhasil diimplementasikan dan diverifikasi lolos pengujian fungsional serta build produksi Vite.
+
+---
+
+## Bagian A: Riwayat Order (Order History) — Selesai ✅
+
+*   **Database Layer:** Postgres Function `get_order_history` untuk fetching data log transaksi dengan JOIN detail item dinamis dalam 1 query.
+*   **Antarmuka Pengguna & Desain Premium:** Pencarian nama pelanggan dengan debounce, filter range tanggal presisi (`00:00:00` s/d `23:59:59`), filter metode pembayaran (toggle), dan modal detail pembelian frosted glassmorphism (`backdrop-blur-md`).
+*   **Pagination Server-Side:** Diatur default 10 transaksi per halaman.
+
+---
+
+## Bagian B: Perhitungan Stok Menu Realtime & Warning Habis — Selesai ✅
+
+*   **Database Layer:** Fungsi RPC `get_products_with_stock()` dengan `SECURITY DEFINER` untuk menghitung kapasitas porsi secara langsung di database menggunakan formula bottleneck: `MIN(FLOOR(stok_bahan / jumlah_pakai))`.
+*   **Halaman Kasir (`CashierPage.jsx` & `ProductCard.jsx`):**
+    *   Tampilan produk habis memiliki overlay blur **"HABIS"** dan menonaktifkan tombol (+).
+    *   Tampilan produk hampir habis ($\le 5$ porsi) memiliki badge kuning **"Sisa X Porsi"**.
+    *   **Tampilan produk normal (> 5 porsi):** Menampilkan badge hijau zamrud (emerald) **"Tersedia: X Porsi"** sehingga kasir dapat memantau kuantitas porsi secara langsung untuk semua menu!
+    *   **Penyelesaian Dummy Image:** Mengganti fallback image cangkir kopi yang menyesatkan pada makanan/non-kopi dengan **placeholder icon minimalis modern** yang disesuaikan dengan kategori menu (`Coffee` untuk kopi, `Utensils` untuk makanan, dan `CupSoda` untuk minuman non-kopi) yang dibalut soft claymorphic gradient background.
+    *   Silent re-fetch secara asinkron setelah checkout sukses agar stok terupdate instan di UI kasir.
+    *   Batas limit keranjang yang mematikan penambahan kuantitas melebihi kapasitas saji.
+*   **Dashboard Admin (`DashboardPage.jsx`):** Seksi **"Stock Alerts"** di paling atas halaman analitik (muncul jika ada menu habis/menipis) dengan navigasi scroll horizontal.
+*   **Proteksi Checkout (`checkoutService.js`):** Validasi kapasitas stok sebelum memproses transaksi.
+
+---
+
+## Bagian C: Paginasi & Filtering Riwayat Stok & Log Aktivitas — Selesai ✅
+
+1. **Peningkatan Komponen Paginasi (`Pagination.jsx`):**
+   - Menambahkan prop `label` yang dinamis sehingga komponen pagination bisa digunakan kembali (reusable) untuk berbagai tipe data seperti `"Log"` atau `"Item"`.
+2. **Halaman Riwayat Stok (`InventoryLogPage.jsx`):**
+   - **Date Filtering:** Menambahkan input tanggal ganda untuk membatasi data perubahan stok.
+   - **Pagination:** Mengintegrasikan pagination client-side dengan batas **10 item per halaman** agar tabel data tetap rapi.
+   - **Reset Filter:** Menambahkan tombol "Reset Filter" yang responsif saat filter pencarian atau rentang tanggal aktif.
+3. **Halaman Log Aktivitas (`ActivityLogPage.jsx`):**
+   - **Layout Linear List:** Mengubah struktur timeline zig-zag lama yang sulit dibaca menjadi bentuk **Linear Card List** satu kolom penuh yang bersih dan modern.
+   - **Pagination:** Mengintegrasikan pembagian halaman **10 log per halaman** sehingga performa render browser tetap optimal dan antarmuka scannable.
+   - **Reset Filter:** Ditambahkan tombol reset pencarian cepat di bagian header.
+
+---
+
+## Bagian D: Redesain Tampilan Alur AI & Dokumentasi Backend — Selesai ✅
+
+Subsistem AI backend Python Flask kini memiliki dokumentasi visual interaktif di halaman admin panel serta panduan arsitektur yang mendalam.
+
+### Yang Telah Dicapai
+1.  **Redesain Total Halaman AI Reasoning (`ai_reasoning.html`):**
+    -   Mengubah desain sederhana menjadi tampilan premium bergaya *claymorphism* dengan tipografi Google Fonts yang memukau.
+    -   Mengimplementasikan **Interactive Tabs** untuk bernavigasi dengan mudah di antara tiga algoritma: **K-Means**, **Linear Regression**, dan **RAM N-Gram Suggestions**.
+    -   Merancang **Bagan Alir (Flowchart) CSS/HTML Interaktif** pada setiap tab yang memetakan masukan data, tahapan transformasi, pengolahan model, evaluasi, hingga hasil akhir yang disimpan ke database.
+    -   Menyediakan penjelasan detail mengenai rumus matematika yang digunakan (seperti normalisasi MinMax, koefisien Silhouette, persamaan regresi linier $y = mx + c$, perhitungan sisa stok 7 hari beserta logika nilai negatif, perhitungan MAPE, dan penyimpanan RAM cache asinkron) dalam bahasa Indonesia yang intuitif.
+2.  **Penerbitan Dokumen Arsitektur AI (`Dokumentasi_Arsitektur_AI.md`):**
+    -   Membuat file panduan teknis yang sangat lengkap di folder backend proyek.
+    -   Dilengkapi dengan **Mermaid JS Sequence & Flowchart Diagrams** untuk mendokumentasikan dengan presisi cara kerja ketiga algoritma kecerdasan buatan Ogut-POS.
+
+---
+
+## Ringkasan File yang Dibuat & Dimodifikasi
+
+| File | Aksi | Deskripsi |
+|------|------|-----------|
+| `backend-pos/templates/ai_reasoning.html` | **[MODIFY]** | Redesain total halaman arsitektur AI dengan diagram alir interaktif & tab navigasi |
+| `backend-pos/Dokumentasi_Arsitektur_AI.md` | **[NEW]** | Dokumen arsitektur teknis lengkap subsistem AI (Mermaid JS, rumus, database) |
+| `features/orders/components/Pagination.jsx` | **[MODIFY]** | Penambahan prop `label` dinamis untuk reusability |
+| `pages/InventoryLogPage.jsx` | **[MODIFY]** | Penambahan filter tanggal ganda, reset filter, & paginasi |
+| `pages/ActivityLogPage.jsx` | **[MODIFY]** | Perubahan ke layout linear list, reset filter, & paginasi |
+| `features/pos/components/ProductCard.jsx` | **[MODIFY]** | Implementasi dynamic stock count & dynamic minimalist category placeholder icons |
+| `features/pos/services/stockService.js` | **[NEW]** | Service layer + konstanta threshold |
+| `pages/CashierPage.jsx` | **[MODIFY]** | Client-side filtering, interactive quantity bounds, silent refresh |
+| `pages/DashboardPage.jsx` | **[MODIFY]** | Seksi Stock Alerts dengan card gradient horizontal scroll |
+| `features/pos/services/checkoutService.js` | **[MODIFY]** | Validasi kapasitas stok sebelum checkout |
+| `features/orders/services/orderHistoryService.js` | **[NEW]** | Service fetching Supabase untuk Riwayat Order |
+| `features/orders/components/OrderDetailModal.jsx` | **[NEW]** | Modal rincian transaksi Riwayat Order |
+| `pages/OrderHistoryPage.jsx` | **[NEW]** | Halaman dashboard riwayat transaksi |
+| `App.jsx` | **[MODIFY]** | Registrasi route riwayat order |
+| `components/layout/Sidebar.jsx` | **[MODIFY]** | Navigasi menu sidebar riwayat order |
+
+---
+
+## Hasil Uji Verifikasi
+
+1. **Flask API Web Server Health Check:** Terverifikasi aktif dan memberikan respons sukses:
+   ```json
+   {"status": "active"}
+   ```
+2. **Kesesuaian Fungsional Halaman AI:**
+   - URL `/admin/ai-reasoning` ter-render sempurna dengan visual flowchart dinamis yang memetakan tahapan K-Means, Regresi Linier, dan N-Gram RAM Cache.
+   - Variabel dynamic thoughts (Silhouette score dan koordinat centroid terakhir) terisi dan ter-render dengan akurat.

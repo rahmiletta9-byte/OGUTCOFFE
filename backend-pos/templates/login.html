@@ -1,30 +1,106 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-    <title>Login Control Panel - Flask</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login IT Control Panel - Ogut Coffee</title>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;700;800&family=Outfit:wght@600;800;900&display=swap" rel="stylesheet">
     <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Plus Jakarta Sans', 'sans-serif'],
+                        outfit: ['Outfit', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        .glass-card {
+            background: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.4);
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.05),
+                        inset 0 2px 4px rgba(255, 255, 255, 0.9);
+            border-radius: 2rem;
+        }
+        .clay-input {
+            border-radius: 1.25rem;
+            box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.02);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .clay-button {
+            border-radius: 1.25rem;
+            box-shadow: 0 4px 12px rgba(180, 83, 9, 0.2),
+                        inset 0 2px 3px rgba(255, 255, 255, 0.3);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .clay-button:active {
+            transform: scale(0.97);
+        }
+    </style>
 </head>
-<body class="bg-slate-100 flex items-center justify-center h-screen">
-    <div class="bg-white p-8 rounded-xl shadow-md w-96">
-        <h1 class="text-2xl font-bold text-center text-slate-800 mb-6">🔒 Flask IT Login</h1>
+<body class="bg-gradient-to-tr from-[#faf8f5] via-[#f7f2ea] to-[#f0e6d6] flex items-center justify-center min-h-screen p-6 font-sans select-none overflow-hidden relative">
+    <!-- Decorative background elements -->
+    <div class="absolute w-96 h-96 bg-amber-200/20 rounded-full filter blur-3xl -top-20 -left-20 animate-pulse"></div>
+    <div class="absolute w-96 h-96 bg-orange-300/10 rounded-full filter blur-3xl -bottom-20 -right-20 animate-pulse" style="animation-duration: 4s;"></div>
+
+    <div class="w-full max-w-[420px] glass-card p-8 md:p-10 relative z-10">
+        <!-- Logo & Header -->
+        <div class="text-center mb-8">
+            <div class="inline-flex items-center justify-center w-14 h-14 bg-gradient-to-br from-amber-500 to-amber-600 rounded-2xl text-white shadow-md shadow-amber-500/20 mb-4">
+                <span class="text-2xl font-black font-outfit">O</span>
+            </div>
+            <span class="text-[9px] font-extrabold uppercase tracking-[0.3em] text-amber-600 font-outfit block">Flask IT Control</span>
+            <h1 class="text-2xl font-black text-slate-900 font-outfit tracking-tight uppercase mt-1">Sistem Manajemen AI</h1>
+        </div>
 
         {% if error %}
-        <div class="bg-red-100 text-red-700 p-3 rounded mb-4 text-sm">{{ error }}</div>
+        <div class="bg-rose-50 text-rose-700 border border-rose-100 p-4 rounded-2xl mb-6 text-xs font-bold uppercase tracking-wider flex items-center gap-2">
+            <span class="w-2 h-2 rounded-full bg-rose-500 shrink-0"></span>
+            {{ error }}
+        </div>
         {% endif %}
 
-        <form action="/admin/login" method="POST" class="space-y-4">
-            <div>
-                <label class="block text-sm text-slate-600 mb-1">Username</label>
-                <input type="text" name="username" required class="w-full p-2 border rounded focus:ring-2 focus:ring-slate-800">
+        <form action="/admin/login" method="POST" class="space-y-6">
+            <div class="space-y-2">
+                <label class="block text-[10px] font-black uppercase tracking-[0.2em] text-slate-500 ml-1">Username</label>
+                <input 
+                    type="text" 
+                    name="username" 
+                    required 
+                    placeholder="Masukkan username IT..."
+                    class="w-full h-14 px-5 bg-white/60 border border-slate-200/80 clay-input text-sm font-bold text-slate-800 focus:bg-white focus:border-amber-500 focus:ring-4 focus:ring-amber-500/10 focus:outline-none"
+                >
             </div>
-            <div>
-                <label class="block text-sm text-slate-600 mb-1">Password</label>
-                <input type="password" name="password" required class="w-full p-2 border rounded focus:ring-2 focus:ring-slate-800">
+            <div class="space-y-2">
+                <label class="block text-[10px] font-black uppercase tracking-[0.2em] text-slate-500 ml-1">Password</label>
+                <input 
+                    type="password" 
+                    name="password" 
+                    required 
+                    placeholder="••••••••••••••"
+                    class="w-full h-14 px-5 bg-white/60 border border-slate-200/80 clay-input text-sm font-bold text-slate-800 focus:bg-white focus:border-amber-500 focus:ring-4 focus:ring-amber-500/10 focus:outline-none"
+                >
             </div>
-            <button type="submit" class="w-full bg-slate-900 text-white font-bold p-2 rounded hover:bg-slate-800">
+            <button 
+                type="submit" 
+                class="w-full h-14 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-white font-extrabold uppercase tracking-widest text-xs clay-button shadow-md"
+            >
                 Masuk Sistem
             </button>
         </form>
+        
+        <div class="text-center mt-8 pt-6 border-t border-slate-200/40">
+            <p class="text-[9px] text-slate-400 font-extrabold uppercase tracking-wider">Ogut Coffee &copy; 2026. All Rights Reserved.</p>
+        </div>
     </div>
 </body>
 </html>

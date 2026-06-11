@@ -36,17 +36,37 @@ export default function OrderHistoryPage() {
   // Debounce search query
   const debouncedSearch = useDebounce(searchQuery, 300);
 
-  // Trigger fetch data saat filter berubah
-  useEffect(() => {
-    // Reset ke halaman 1 jika ada filter yang berubah untuk menghindari bug offset
-    setCurrentPage(1);
-  }, [debouncedSearch, activePaymentMethod, startDateStr, endDateStr]);
+  // Ref untuk melacak parameter pemanggilan API terakhir agar tidak terjadi dobel fetch
+  const lastLoadedRef = React.useRef({ page: null, debouncedSearch: null, activePaymentMethod: null, startDateStr: null, endDateStr: null });
 
+  // Trigger fetch data saat filter atau halaman berubah (BUG-07)
   useEffect(() => {
-    loadOrderHistory();
+    const last = lastLoadedRef.current;
+    const filterChanged = last.debouncedSearch !== debouncedSearch ||
+                          last.activePaymentMethod !== activePaymentMethod ||
+                          last.startDateStr !== startDateStr ||
+                          last.endDateStr !== endDateStr;
+
+    let pageToLoad = currentPage;
+    if (filterChanged) {
+      pageToLoad = 1;
+      setCurrentPage(1);
+    }
+
+    // Jalankan fetch hanya jika filter berubah atau halaman benar-benar berubah secara manual
+    if (filterChanged || currentPage !== last.page) {
+      loadOrderHistory(pageToLoad);
+      lastLoadedRef.current = {
+        page: pageToLoad,
+        debouncedSearch,
+        activePaymentMethod,
+        startDateStr,
+        endDateStr
+      };
+    }
   }, [currentPage, debouncedSearch, activePaymentMethod, startDateStr, endDateStr]);
 
-  const loadOrderHistory = async () => {
+  const loadOrderHistory = async (pageParam) => {
     setIsLoading(true);
     try {
       let isoStart = null;
@@ -65,12 +85,14 @@ export default function OrderHistoryPage() {
         isoEnd = d.toISOString();
       }
 
+      const pageToUse = pageParam !== undefined ? pageParam : currentPage;
+
       const result = await fetchOrderHistory({
         startDate: isoStart,
         endDate: isoEnd,
         paymentMethod: activePaymentMethod,
         search: debouncedSearch,
-        page: currentPage,
+        page: pageToUse,
         pageSize
       });
 

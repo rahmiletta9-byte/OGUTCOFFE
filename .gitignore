@@ -1,0 +1,22 @@
+# Python virtual environment
+backend-pos/venv/
+backend-pos/__pycache__/
+backend-pos/**/*.pyc
+
+# Sensitive configuration files
+backend-pos/.env
+backend-pos/config.json
+backend-pos/ngram_backup.json
+
+
+# Node dependencies and build files
+frontend/node_modules/
+frontend/dist/
+frontend/.env.local
+frontend/.env
+
+# IDE and OS files
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db

@@ -28,21 +28,43 @@ export default function DashboardPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [isRevenueModalOpen, setIsRevenueModalOpen] = useState(false);
 
+  // State Metrik Dinamis (BUG-15)
+  const [silhouetteScore, setSilhouetteScore] = useState(0.68);
+  const [modelAccuracy, setModelAccuracy] = useState(94.2);
+  const [totalForecasts, setTotalForecasts] = useState(128);
+
   useEffect(() => {
     const fetchAIData = async () => {
       setIsLoading(true);
       try {
         const { data: clusters } = await supabase
           .from('ai_cluster_results')
-          .select(`cluster_label, products ( name, category )`)
+          .select(`cluster_label, silhouette_score, products ( name, category )`)
           .order('id', { ascending: false }).limit(10);
-        if (clusters) setClusterData(clusters);
+        
+        if (clusters) {
+          setClusterData(clusters);
+          if (clusters.length > 0 && clusters[0].silhouette_score !== null) {
+            setSilhouetteScore(clusters[0].silhouette_score);
+          }
+        }
 
         const { data: predictions } = await supabase
           .from('ai_prediction_results')
-          .select(`predicted_stock, materials ( name, unit, current_stock )`)
+          .select(`predicted_stock, mape_score, materials ( name, unit, current_stock )`)
           .order('id', { ascending: false }).limit(8);
-        if (predictions) setPredictionData(predictions);
+        
+        if (predictions) {
+          setPredictionData(predictions);
+          // Hitung total forecast secara dinamis berdasarkan jumlah bahan baku yang diprediksi
+          setTotalForecasts(predictions.length);
+          
+          if (predictions.length > 0) {
+            const avgMape = predictions.reduce((sum, p) => sum + (parseFloat(p.mape_score) || 0), 0) / predictions.length;
+            // Akurasi = 100% - MAPE (Rata-rata Tingkat Error)
+            setModelAccuracy(100 - avgMape);
+          }
+        }
 
         // Fetch Stock Alert Products
         try {
@@ -266,15 +288,15 @@ export default function DashboardPage() {
                 <Card className="bg-primary p-10 text-primary-foreground relative overflow-hidden clay-card" style={{backgroundColor: 'hsl(var(--primary))'}}>
                     <div className="relative z-10 space-y-2">
                         <p className="text-[10px] font-black opacity-60 uppercase tracking-[0.3em]">Model Accuracy</p>
-                        <h4 className="text-5xl font-black tracking-tighter italic leading-none">94.2%</h4>
-                        <Badge variant="secondary" className="mt-6 clay-badge">Silhoutte Score: 0.68</Badge>
+                        <h4 className="text-5xl font-black tracking-tighter italic leading-none">{modelAccuracy.toFixed(1)}%</h4>
+                        <Badge variant="secondary" className="mt-6 clay-badge">Silhouette Score: {silhouetteScore.toFixed(2)}</Badge>
                     </div>
                     <BarChart3 className="absolute -bottom-6 -right-6 opacity-10 h-48 w-48 rotate-12" />
                 </Card>
                 <Card className="p-10 relative overflow-hidden clay-card">
                     <div className="space-y-2">
                         <p className="text-[10px] font-black text-muted-foreground uppercase tracking-[0.3em] opacity-60">Total Forecasts</p>
-                        <h4 className="text-5xl font-black tracking-tighter text-foreground leading-none">128 <span className="text-xs font-black opacity-30 tracking-tight">Items</span></h4>
+                        <h4 className="text-5xl font-black tracking-tighter text-foreground leading-none">{totalForecasts} <span className="text-xs font-black opacity-30 tracking-tight">Items</span></h4>
                         <div className="flex items-center gap-2 mt-6 text-green-500 font-black text-xs uppercase tracking-tighter">
                             <TrendingUp size={16} />
                             <span>+12.5% Month Growth</span>

@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import UpdateStockModal from '@/features/inventory/components/UpdateStockModal';
 import PageHeader from '@/components/layout/PageHeader';
+import useDebounce from '@/features/pos/hooks/useDebounce';
 
 export default function InventoryPage() {
   const [materials, setMaterials] = useState([]);
@@ -14,18 +15,20 @@ export default function InventoryPage() {
   const [selectedMaterial, setSelectedMaterial] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  const fetchMaterials = async () => {
+  const debouncedSearch = useDebounce(searchQuery, 300);
+
+  const fetchMaterials = async (searchVal = debouncedSearch) => {
     setIsLoading(true);
     let query = supabase.from('materials').select('*');
-    if (searchQuery) query = query.ilike('name', `%${searchQuery}%`);
+    if (searchVal) query = query.ilike('name', `%${searchVal}%`);
     const { data } = await query.order('name');
     if (data) setMaterials(data);
     setIsLoading(false);
   };
 
   useEffect(() => {
-    fetchMaterials();
-  }, [searchQuery]);
+    fetchMaterials(debouncedSearch);
+  }, [debouncedSearch]);
 
   return (
     <div className="flex-1 w-full bg-background overflow-hidden font-sans text-foreground flex">
