@@ -25,6 +25,10 @@ export default function MenuForm({ initialData, onSuccess }) {
   const [recipeItems, setRecipeItems] = useState([]); 
   // { material_id: '...', name: '...', quantity: 1, isNew: false, unit: 'kg' }
 
+  // Step 2 Search & Autocomplete State
+  const [materialSearchQuery, setMaterialSearchQuery] = useState('');
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+
   useEffect(() => {
     fetchMaterials();
     
@@ -77,13 +81,26 @@ export default function MenuForm({ initialData, onSuccess }) {
   const addExistingMaterial = (materialId) => {
     const mat = availableMaterials.find(m => m.id === materialId);
     if (!mat) return;
-    if (recipeItems.some(item => item.material_id === materialId && !item.isNew)) return; // prevent duplicate
+    if (recipeItems.some(item => item.material_id === materialId)) return; // prevent duplicate
     
     setRecipeItems([...recipeItems, { material_id: mat.id, name: mat.name, quantity: 1, isNew: false, unit: mat.unit }]);
   };
 
-  const addNewMaterialRow = () => {
-    setRecipeItems([...recipeItems, { material_id: `new-${Date.now()}`, name: '', quantity: 1, isNew: true, unit: 'pcs' }]);
+  const handleCreateNewMaterialFromSearch = (nameToCreate) => {
+    if (!nameToCreate.trim()) return;
+    // Cek jika nama sudah ada di resep untuk menghindari duplikat
+    if (recipeItems.some(item => item.name.toLowerCase() === nameToCreate.trim().toLowerCase())) return;
+    
+    setRecipeItems([...recipeItems, { 
+      material_id: `new-${Date.now()}`, 
+      name: nameToCreate.trim(), 
+      quantity: 1, 
+      isNew: true, 
+      unit: 'gr' 
+    }]);
+    
+    setMaterialSearchQuery('');
+    setIsDropdownOpen(false);
   };
 
   const updateRecipeItem = (index, field, value) => {
@@ -177,6 +194,10 @@ export default function MenuForm({ initialData, onSuccess }) {
   };
 
   const isEditMode = !!initialData;
+
+  const filteredMaterials = availableMaterials.filter(mat => 
+    mat.name.toLowerCase().includes(materialSearchQuery.toLowerCase())
+  );
 
   return (
     <Card className="rounded-[3rem] border-none shadow-xl shadow-stone-200/50 bg-white overflow-hidden max-h-[90vh] flex flex-col">
@@ -364,29 +385,86 @@ export default function MenuForm({ initialData, onSuccess }) {
                 </div>
               ))}
 
-              <div className="flex flex-col sm:flex-row gap-3 mt-6 pt-4 border-t border-muted/20">
-                 <select 
-                    className="flex-1 h-12 px-4 bg-white border border-muted rounded-[1rem] font-bold text-sm shadow-sm outline-none cursor-pointer"
+              <div className="relative mt-6 pt-4 border-t border-muted/20">
+                <label className="text-xs font-black text-muted-foreground uppercase tracking-[0.2em] ml-1 opacity-50 block mb-2">Cari & Tambah Bahan Baku</label>
+                <div className="relative">
+                  <Input 
+                    type="text" 
+                    placeholder="Ketik nama bahan (contoh: Espresso, Susu, Gula...)" 
+                    className="h-12 pl-4 pr-10 rounded-[1rem] bg-white border border-muted focus-visible:ring-primary shadow-sm text-sm font-bold w-full"
+                    value={materialSearchQuery}
                     onChange={(e) => {
-                      if(e.target.value) addExistingMaterial(e.target.value);
-                      e.target.value = ""; // reset
+                      setMaterialSearchQuery(e.target.value);
+                      setIsDropdownOpen(true);
                     }}
-                    defaultValue=""
-                  >
-                    <option value="" disabled>+ Pilih Bahan dari Gudang</option>
-                    {availableMaterials.map(m => (
-                      <option key={m.id} value={m.id}>{m.name} ({m.unit})</option>
-                    ))}
-                 </select>
-                 
-                 <Button 
-                    variant="outline" 
-                    onClick={addNewMaterialRow}
-                    className={`h-12 rounded-[1rem] font-black uppercase tracking-wider text-xs ${isEditMode ? 'border-amber-500/20 text-amber-500 hover:bg-amber-500/5' : 'border-primary/20 text-primary hover:bg-primary/5'}`}
-                 >
-                    <Plus size={16} className="mr-2" />
-                    Bahan Baru
-                 </Button>
+                    onFocus={() => setIsDropdownOpen(true)}
+                  />
+                  {materialSearchQuery && (
+                    <button 
+                      onClick={() => setMaterialSearchQuery('')}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground/50 hover:text-muted-foreground text-xs font-bold"
+                    >
+                      Clear
+                    </button>
+                  )}
+                </div>
+
+                {isDropdownOpen && (
+                  <>
+                    <div 
+                      className="fixed inset-0 z-10" 
+                      onClick={() => setIsDropdownOpen(false)}
+                    />
+                    <div className="absolute left-0 right-0 mt-2 bg-white rounded-2xl shadow-xl border border-muted/30 max-h-60 overflow-y-auto z-20 scrollbar-hide py-2 animate-in slide-in-from-top-2 duration-200">
+                      {filteredMaterials.length > 0 ? (
+                        filteredMaterials.map(mat => {
+                          const isAlreadyAdded = recipeItems.some(item => item.material_id === mat.id);
+                          return (
+                            <button
+                              key={mat.id}
+                              type="button"
+                              disabled={isAlreadyAdded}
+                              onClick={() => {
+                                addExistingMaterial(mat.id);
+                                setMaterialSearchQuery('');
+                                setIsDropdownOpen(false);
+                              }}
+                              className={`w-full text-left px-5 py-3 text-sm font-bold flex items-center justify-between transition-colors ${
+                                isAlreadyAdded 
+                                  ? 'text-muted-foreground/40 bg-muted/5 cursor-not-allowed' 
+                                  : 'text-foreground hover:bg-muted/30'
+                              }`}
+                            >
+                              <span>{mat.name} ({mat.unit})</span>
+                              {isAlreadyAdded ? (
+                                <span className="text-[10px] uppercase tracking-wider font-black text-primary bg-primary/10 px-2 py-0.5 rounded-full">Sudah Ada</span>
+                              ) : (
+                                <span className="text-[10px] uppercase tracking-wider font-black text-muted-foreground/50">Gudang</span>
+                              )}
+                            </button>
+                          );
+                        })
+                      ) : (
+                        <div className="px-5 py-3 text-xs font-bold text-muted-foreground italic">
+                          Tidak ada bahan gudang yang cocok
+                        </div>
+                      )}
+
+                      {materialSearchQuery.trim() && (
+                        <div className="border-t border-muted/20 my-1 pt-1">
+                          <button
+                            type="button"
+                            onClick={() => handleCreateNewMaterialFromSearch(materialSearchQuery)}
+                            className="w-full text-left px-5 py-3 text-sm font-black text-primary hover:bg-primary/5 flex items-center gap-2 transition-colors uppercase tracking-wider text-xs"
+                          >
+                            <Plus size={14} />
+                            Buat bahan baru: "{materialSearchQuery.trim()}"
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  </>
+                )}
               </div>
 
             </div>
