@@ -1,0 +1,18 @@
+2026-06-24 15:19:26,540 [INFO] app: Memulai pemuatan awal data N-Gram...
+2026-06-24 15:19:26,541 [INFO] ngram: Memuat data N-Gram dari file backup ngram_backup.json...
+2026-06-24 15:19:26,543 [INFO] ngram: Berhasil memuat 4 data dari backup.
+2026-06-24 15:19:26,543 [INFO] ngram: Mensinkronkan data N-Gram dengan menu dasar dari Supabase...
+2026-06-24 15:19:27,552 [INFO] httpx: HTTP Request: GET https://hvlozalqchfjqplnwfgs.supabase.co/rest/v1/products?select=name "HTTP/2 200 OK"
+2026-06-24 15:19:27,564 [INFO] ngram: Sinkronisasi selesai. Menambahkan 35 menu baru. Total menu dalam RAM: 39.
+2026-06-24 15:19:27,567 [INFO] ngram: N-Gram backup saved successfully to ngram_backup.json (39 items).
+2026-06-24 15:19:27,601 [INFO] apscheduler.scheduler: Adding job tentatively -- it will be properly scheduled when the scheduler starts
+2026-06-24 15:19:27,602 [INFO] apscheduler.scheduler: Added job "run_nightly_ai_jobs" to job store "default"
+2026-06-24 15:19:27,603 [INFO] apscheduler.scheduler: Scheduler started
+2026-06-24 15:19:27,606 [INFO] app: Jadwal Scheduler AI aktif pada 23:59 setiap hari.
+2026-06-24 15:19:27,606 [INFO] app: Server Flask berjalan. Menunggu API Call dan Jadwal AI...
+2026-06-24 15:19:27,635 [INFO] werkzeug: [31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on all addresses (0.0.0.0)
+ * Running on http://127.0.0.1:5000
+ * Running on http://10.208.14.212:5000
+2026-06-24 15:19:27,635 [INFO] werkzeug: [33mPress CTRL+C to quit[0m
+2026-06-24 17:04:58,378 [INFO] apscheduler.scheduler: Scheduler has been shut down
