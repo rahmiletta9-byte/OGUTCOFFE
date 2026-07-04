@@ -1,7 +1,11 @@
 from flask import Blueprint, request, jsonify
 import os
+import logging
 from functools import wraps
 from memory.ngram_cache import get_suggestions, increment_frequency
+
+# Logger Setup
+logger = logging.getLogger("api")
 
 # Membuat Blueprint untuk grup API
 api_bp = Blueprint('api', __name__)
@@ -13,7 +17,10 @@ def require_api_key(f):
         api_key = request.headers.get('X-API-Key')
         expected_key = os.environ.get('INTERNAL_API_KEY', 'ogut_pos_internal_api_key_2026')
         
+        logger.info(f"Incoming request {request.method} {request.path} from {request.remote_addr}. API Key: {'VALID' if api_key == expected_key else 'INVALID'}")
+        
         if not api_key or api_key != expected_key:
+            logger.warning(f"Unauthorized API Key access from {request.remote_addr}")
             return jsonify({"error": "Unauthorized: API Key tidak valid atau kosong"}), 401
             
         return f(*args, **kwargs)
@@ -27,9 +34,11 @@ def suggest():
     Contoh akses: GET /api/suggest?q=kopi
     """
     query = request.args.get('q', '')
+    logger.info(f"Suggest request query: '{query}'")
 
     # Memanggil fungsi di memori RAM
     results = get_suggestions(query)
+    logger.info(f"Suggest results for '{query}': {results}")
 
     # Mengembalikan hasil ke React dalam bentuk Array JSON
     return jsonify(results), 200
@@ -42,14 +51,17 @@ def increment():
     Contoh Body: { "items": ["Kopi Susu Gula Aren"] }
     """
     data = request.get_json()
+    logger.info(f"Increment N-Gram request payload: {data}")
 
     if not data or 'items' not in data:
+        logger.warning(f"Invalid Increment N-Gram request format: {data}")
         return jsonify({"error": "Format data salah"}), 400
 
     items = data.get('items', [])
 
     # Memanggil fungsi penambahan skor di RAM
     increment_frequency(items)
+    logger.info(f"N-Gram scores incremented for: {items}")
 
     return jsonify({"status": "success", "message": "N-Gram berhasil diperbarui"}), 200
 

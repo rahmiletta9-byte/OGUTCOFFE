@@ -1,0 +1,73 @@
+# Dokumentasi Penyelesaian, Progres, dan Kendala Debugging
+**Sistem Point of Sales (POS) Ogut Coffee Terintegrasi AI**
+
+Dokumen ini merangkum seluruh hasil pekerjaan debugging alur data dan state dari database (Supabase PostgreSQL), Flask backend, hingga React frontend.
+
+---
+
+## 1. Progres & Penyelesaian Pekerjaan
+
+Kami telah berhasil mengidentifikasi dan memecahkan bug integritas data yang kritis serta mengimplementasikan logging terpusat di seluruh lapisan aplikasi.
+
+### A. Perbaikan Bug Kritis: Pengurangan Stok Ganda (Double Stock Deduction)
+- **Temuan Masalah (Bug):** Saat melakukan pengujian checkout otomatis (E2E), ditemukan bahwa stok bahan baku berkurang **dua kali lipat** dari jumlah yang seharusnya (misalnya, memesan 2 porsi Matcha Latte mengurangi stok bubuk Matcha sebanyak 4 porsi).
+- **Analisis Penyebab:** Terjadi redundansi proses pengurangan stok di database:
+  1. Stored Procedure `process_checkout` secara manual melakukan `UPDATE materials SET current_stock = current_stock - required`.
+  2. Tabel `transaction_items` memiliki trigger `on_transaction_item_insert` yang secara otomatis melacak resep dan mengurangi stok di tabel `materials` *kembali* saat item transaksi dimasukkan.
+- **Solusi yang Diterapkan:**
+  - Kami memodifikasi fungsi stored procedure `process_checkout` di database Supabase untuk menghapus perintah `UPDATE materials`.
+  - Stored procedure tetap melakukan **validasi ketersediaan stok** dan **row-locking (`FOR UPDATE`)** untuk mencegah *race condition*, tetapi menyerahkan eksekusi pengurangan stok dan pencatatan log harian (`inventory_logs`) sepenuhnya ke database trigger `on_transaction_item_insert`.
+- **Hasil Pengujian E2E:** 
+  - Transaksi berhasil mengurangi stok secara akurat (1x pengurangan).
+  - Transaksi dengan stok tidak mencukupi dibatalkan secara otomatis (Database rollback sukses) dan mengembalikan pesan error yang ramah.
+
+### B. Konfigurasi Logging Terpusat & Tracing di Flask Backend
+- **Tindakan:** Mengatur pustaka standard `logging` Python di `app.py`, `api/routes.py`, dan `memory/ngram_cache.py`.
+- **Hasil:**
+  - Server sekarang mencatat log terperinci mengenai inisialisasi RAM cache N-Gram, sinkronisasi produk dengan database Supabase, dan status scheduler AI.
+  - Seluruh log request/response dari endpoint `/api/suggest` dan `/api/ngram/increment` tersimpan di file `backend-pos/app.log` serta tampil di output console terminal.
+
+### C. Tracing State di React Frontend
+- **Tindakan:**
+  - Menambahkan tracing log di `AuthContext.jsx` untuk melacak transisi state session (`user`, `role`, dan `loading`).
+  - Menambahkan log pada `checkoutService.js` dan `stockService.js` untuk memantau request payload dan response RPC database.
+  - Membuat fungsi log terpusat `devLog` di `frontend/src/lib/logger.js` dengan style khusus developer (teks berwarna di console browser) yang hanya aktif pada mode pengembangan (`import.meta.env.DEV`).
+
+---
+
+## 2. Hasil Pengujian Kebijakan Keamanan (RLS)
+
+Kami memverifikasi kebijakan Row Level Security (RLS) pada Supabase PostgreSQL menggunakan simulator login. Hasil pengujian menunjukkan kebijakan keamanan database telah terkonfigurasi dengan benar:
+
+| Role Pengguna | Tabel | Jenis Aksi | Status | Hasil Aktual |
+| :--- | :--- | :--- | :--- | :--- |
+| **Admin** | Semua Tabel | SELECT / UPDATE | **200 OK** | Memiliki akses penuh (baca/tulis). |
+| **Kasir** | `products` | SELECT | **200 OK** | Bisa membaca menu. |
+| **Kasir** | `products` | UPDATE | **200 OK (0 Rows)** | Diblokir oleh RLS (harga tidak berubah). |
+| **Kasir** | `transactions` | INSERT / SELECT | **201 / 200** | Bisa mencatat & melihat riwayat transaksi. |
+| **Kasir** | `materials` | SELECT | **200 (0 Rows)** | Diblokir oleh RLS (tidak bisa intip bahan baku). |
+| **Staf Bahan** | `materials` | SELECT / UPDATE | **200 OK** | Bisa mengelola stok bahan gudang. |
+| **Staf Bahan** | `transactions` | SELECT | **200 (0 Rows)** | Diblokir oleh RLS (tidak bisa intip keuangan). |
+
+---
+
+## 3. Kendala & Masalah yang Ditemui (Obstacles)
+
+### A. Masalah Halaman Hang ("MEMUAT SISTEM...") pada Browser Sandbox
+- **Deskripsi Kendala:** Saat pengujian otomatis menggunakan Browser Subagent dijalankan, halaman sesekali mengalami hang di layar pemuatan ("MEMUAT SISTEM...") dan tidak merespons tombol tambah item.
+- **Analisis Teknis:** 
+  1. Halaman web POS mendeteksi adanya session yang tersimpan dari login sebelumnya di `localStorage`.
+  2. Supabase client secara otomatis memanggil `auth.getSession()`, yang mencoba me-refresh token auth yang telah kedaluwarsa dengan menghubungi endpoint auth Supabase (`hvlozalqchfjqplnwfgs.supabase.co`).
+  3. Karena Browser Subagent berjalan di lingkungan terisolasi (sandbox) dengan restriksi firewall tertentu, request eksternal ke Supabase Auth tersebut terkadang terhambat (hang) atau mengalami timeout yang lama.
+  4. Karena promise `getSession()` tertahan, state `loading` pada `AuthContext.jsx` tetap bernilai `true`, sehingga memblokir rendering komponen login atau pos.
+- **Solusi/Workaround:**
+  - Ini adalah keterbatasan **jaringan sandbox browser subagent** dan tidak terjadi pada server riil atau testing terminal (di mana Node.js dan Python requests berhasil merespons instan < 1 detik).
+  - Untuk pengujian di browser, solusi cepatnya adalah dengan membersihkan penyimpanan lokal browser (`localStorage.clear(); sessionStorage.clear();`) lalu memuat ulang halaman untuk membuang session kedaluwarsa yang tersangkut.
+
+---
+
+## 4. Rekaman Pengujian UI
+
+Berikut adalah rekaman sesi browser dari subagent yang memuat halaman login:
+
+![Sesi Browser](/C:/Users/Lenovo/.gemini/antigravity-ide/brain/c8f9d455-912b-4405-b4f9-1f68009f734b/pos_checkout_flow_demo_1782286151247.webp)

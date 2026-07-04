@@ -12,6 +12,10 @@ export const AuthProvider = ({ children }) => {
     let isMounted = true;
 
     const fetchSessionAndRole = async (session) => {
+      if (import.meta.env.DEV) {
+        console.log("AuthContext: fetchSessionAndRole initiated for email:", session?.user?.email || "No session");
+      }
+      
       if (!session?.user) {
         if (isMounted) {
           setUser(null);
@@ -21,9 +25,15 @@ export const AuthProvider = ({ children }) => {
         return;
       }
 
-      if (isMounted) setUser(session.user);
+      if (isMounted) {
+        setLoading(true);
+        setUser(session.user);
+      }
 
       try {
+        if (import.meta.env.DEV) {
+          console.log("AuthContext: Fetching role from user_roles table for user ID:", session.user.id);
+        }
         const { data, error } = await supabase
           .from('user_roles')
           .select('role')
@@ -35,6 +45,9 @@ export const AuthProvider = ({ children }) => {
             console.error("AuthContext: Role fetch error:", error.message);
             setRole(null);
           } else {
+            if (import.meta.env.DEV) {
+              console.log(`AuthContext: Role loaded successfully. Email: ${session.user.email}, Role: ${data?.role}`);
+            }
             setRole(data?.role || null);
           }
         }
@@ -48,9 +61,15 @@ export const AuthProvider = ({ children }) => {
 
     // 1. Ambil session saat ini secara eksplisit untuk mencegah race condition
     const getInitialSession = async () => {
+      if (import.meta.env.DEV) {
+        console.log("AuthContext: Requesting initial session...");
+      }
       try {
         const { data: { session }, error } = await supabase.auth.getSession();
         if (error) throw error;
+        if (import.meta.env.DEV) {
+          console.log("AuthContext: Initial session checked. Active user:", session?.user?.email || "None");
+        }
         await fetchSessionAndRole(session);
       } catch (err) {
         console.error("Error getting initial session:", err);
@@ -63,7 +82,9 @@ export const AuthProvider = ({ children }) => {
     // 2. Dengarkan perubahan status auth (kecuali INITIAL_SESSION yang sudah ditangani)
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
-        console.log("Auth Event:", event);
+        if (import.meta.env.DEV) {
+          console.log(`AuthContext: Auth State Event Triggered [${event}]. Active User:`, session?.user?.email || "None");
+        }
         if (event === 'INITIAL_SESSION') return;
         await fetchSessionAndRole(session);
       }

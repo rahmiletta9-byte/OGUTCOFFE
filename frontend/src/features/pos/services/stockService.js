@@ -6,12 +6,21 @@ export const STOCK_THRESHOLD = {
 };
 
 export async function fetchProductsWithStock() {
+  if (import.meta.env.DEV) {
+    console.log("StockService: Fetching products with active ingredients stock...");
+  }
   try {
     const { data, error } = await supabase.rpc('get_products_with_stock');
-    if (error) throw error;
+    if (error) {
+      console.error('StockService: Fetching products with stock failed:', error);
+      throw error;
+    }
+    if (import.meta.env.DEV) {
+      console.log(`StockService: Successfully fetched ${data?.length || 0} products with active stock.`);
+    }
     return data || [];
   } catch (error) {
-    console.error('Error fetching products with stock:', error);
+    console.error('StockService: Exception during stock fetching:', error);
     throw error;
   }
 }

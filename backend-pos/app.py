@@ -3,9 +3,21 @@ from flask_cors import CORS
 import atexit
 import json
 import os
+import logging
 from functools import wraps
 from dotenv import load_dotenv
 from werkzeug.security import check_password_hash
+
+# Konfigurasi Logging Terpusat
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s [%(levelname)s] %(name)s: %(message)s',
+    handlers=[
+        logging.FileHandler("app.log", encoding="utf-8"),
+        logging.StreamHandler()
+    ]
+)
+logger = logging.getLogger("app")
 
 # Memuat environment variables
 load_dotenv()
@@ -100,16 +112,20 @@ def admin_ai_reasoning():
 app.register_blueprint(api_bp)
 # Fungsi pembungkus untuk menjalankan semua Job AI
 def run_nightly_ai_jobs():
-    print("\n--- MEMULAI BATCH PROCESSING AI MALAM HARI ---")
-    run_kmeans()
-    run_regression()
-    print("--- BATCH PROCESSING SELESAI ---\n")
+    logger.info("MEMULAI BATCH PROCESSING AI MALAM HARI")
+    try:
+        run_kmeans()
+        run_regression()
+        logger.info("BATCH PROCESSING SELESAI")
+    except Exception as e:
+        logger.error(f"Error running batch processing AI: {e}", exc_info=True)
 
 @app.route('/api/health', methods=['GET'])
 def health_check():
     return jsonify({"status": "active"}), 200
 
 # 1. Muat data N-Gram ke RAM (Hanya jalan sekali saat server menyala)
+logger.info("Memulai pemuatan awal data N-Gram...")
 load_initial_data()
 
 # 2. Konfigurasi dan Nyalakan Scheduler di level modul (BUG-10)
@@ -117,13 +133,14 @@ scheduler = BackgroundScheduler()
 # Jadwalkan fungsi AI jalan setiap hari pukul 23:59
 scheduler.add_job(func=run_nightly_ai_jobs, trigger="cron", hour=23, minute=59)
 scheduler.start()
+logger.info("Jadwal Scheduler AI aktif pada 23:59 setiap hari.")
 
 # Pastikan scheduler dimatikan dengan aman saat server dihentikan paksa (Ctrl+C)
 atexit.register(lambda: scheduler.shutdown())
 
 if __name__ == '__main__':
     # Nyalakan server Flask secara lokal
-    print("Server Flask berjalan. Menunggu API Call dan Jadwal AI...")
+    logger.info("Server Flask berjalan. Menunggu API Call dan Jadwal AI...")
     app.run(host='0.0.0.0', port=5000, debug=False)   
     # Note: Set debug=False saat menggunakan Scheduler agar job tidak jalan 2x (dobel) karena auto-reload.
 
