@@ -76,14 +76,7 @@ export default function MenuPage() {
         .eq('product_id', id);
       if (recipeErr) throw recipeErr;
 
-      // 2. Hapus rujukan hasil AI cluster
-      const { error: clusterErr } = await supabase
-        .from('ai_cluster_results')
-        .delete()
-        .eq('product_id', id);
-      if (clusterErr) throw clusterErr;
-
-      // 3. Hapus produk utama
+      // 2. Hapus produk utama
       const { error: deleteErr } = await supabase
         .from('products')
         .delete()

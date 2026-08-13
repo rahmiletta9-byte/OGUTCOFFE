@@ -27,8 +27,7 @@ load_dotenv()
 from api.routes import api_bp
 from api.auth_routes import auth_bp
 from memory.ngram_cache import load_initial_data, get_memory_stats
-from ai_services.kmeans_clustering import run_kmeans, LAST_AI_THOUGHTS
-from ai_services.linear_regression import run_regression
+from ai_services.linear_regression import run_regression, LAST_AI_THOUGHTS
 
 # Import Scheduler
 from apscheduler.schedulers.background import BackgroundScheduler
@@ -150,7 +149,6 @@ app.register_blueprint(auth_bp)
 def run_nightly_ai_jobs():
     logger.info("MEMULAI BATCH PROCESSING AI MALAM HARI")
     try:
-        run_kmeans()
         run_regression()
         logger.info("BATCH PROCESSING SELESAI")
     except Exception as e:

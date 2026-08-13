@@ -16,7 +16,6 @@ def generate_dummy_data():
     try:
         # Hapus rujukan dulu (FK constraints)
         db.table('ai_prediction_results').delete().neq('id', '00000000-0000-0000-0000-000000000000').execute()
-        db.table('ai_cluster_results').delete().neq('id', '00000000-0000-0000-0000-000000000000').execute()
         db.table('inventory_logs').delete().neq('id', '00000000-0000-0000-0000-000000000000').execute()
         db.table('transaction_items').delete().neq('id', '00000000-0000-0000-0000-000000000000').execute()
         db.table('transactions').delete().neq('id', '00000000-0000-0000-0000-000000000000').execute()
@@ -161,14 +160,6 @@ def generate_dummy_data():
     # 4. Generate Initial AI Results (Snapshot)
     # This ensures the Dashboard is not empty on first visit
     print("Menghasilkan hasil AI awal untuk dashboard...")
-    
-    initial_clusters = [
-        {"product_id": product_kopi_susu, "cluster_label": "Laris & Untung Besar", "silhouette_score": 0.85},
-        {"product_id": product_americano, "cluster_label": "Menengah", "silhouette_score": 0.85},
-        {"product_id": product_matcha, "cluster_label": "Menengah", "silhouette_score": 0.85},
-        {"product_id": product_kentang, "cluster_label": "Kurang Laris", "silhouette_score": 0.85},
-    ]
-    db.table('ai_cluster_results').insert(initial_clusters).execute()
 
     initial_predictions = [
         {"material_id": material_biji_kopi, "predicted_stock": 4200.5, "mape_score": 5.2},

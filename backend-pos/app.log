@@ -63,3 +63,36 @@
 2026-08-13 15:02:11,808 [INFO] app: Jadwal Scheduler AI aktif pada 23:59 setiap hari.
 2026-08-13 15:02:11,808 [INFO] apscheduler.scheduler: Scheduler has been shut down
 2026-08-13 15:04:59,326 [INFO] apscheduler.scheduler: Scheduler has been shut down
+2026-08-13 15:05:21,133 [INFO] app: Memulai pemuatan awal data N-Gram...
+2026-08-13 15:05:21,133 [INFO] ngram: Memuat data N-Gram dari file backup ngram_backup.json...
+2026-08-13 15:05:21,135 [INFO] ngram: Berhasil memuat 48 data dari backup.
+2026-08-13 15:05:21,137 [INFO] ngram: Mensinkronkan data N-Gram dengan menu dasar dari Supabase...
+2026-08-13 15:05:22,359 [INFO] httpx: HTTP Request: GET https://hvlozalqchfjqplnwfgs.supabase.co/rest/v1/products?select=name "HTTP/2 200 OK"
+2026-08-13 15:05:22,365 [INFO] ngram: Sinkronisasi selesai. Menambahkan 0 menu baru. Total menu dalam RAM: 48.
+2026-08-13 15:05:22,371 [INFO] ngram: N-Gram backup saved successfully to ngram_backup.json (48 items).
+2026-08-13 15:05:22,393 [INFO] apscheduler.scheduler: Adding job tentatively -- it will be properly scheduled when the scheduler starts
+2026-08-13 15:05:22,397 [INFO] apscheduler.scheduler: Added job "run_nightly_ai_jobs" to job store "default"
+2026-08-13 15:05:22,397 [INFO] apscheduler.scheduler: Scheduler started
+2026-08-13 15:05:22,399 [INFO] app: Jadwal Scheduler AI aktif pada 23:59 setiap hari.
+2026-08-13 15:06:09,778 [INFO] api.auth_routes: Proses login untuk email: admin@ogut.com
+2026-08-13 15:06:10,533 [INFO] httpx: HTTP Request: POST https://hvlozalqchfjqplnwfgs.supabase.co/auth/v1/token?grant_type=password "HTTP/2 200 OK"
+2026-08-13 15:06:11,204 [INFO] httpx: HTTP Request: GET https://hvlozalqchfjqplnwfgs.supabase.co/rest/v1/user_roles?select=role&user_id=eq.7d86fd4a-a8c4-4743-9a83-4062b024f616 "HTTP/2 200 OK"
+2026-08-13 15:06:11,206 [INFO] api.auth_routes: User admin@ogut.com berhasil login dengan role: admin
+2026-08-13 15:06:18,935 [WARNING] auth.supabase_jwt: Token JWT tidak valid: The specified alg value is not allowed
+2026-08-13 15:06:18,971 [WARNING] auth.supabase_jwt: Token JWT tidak valid: The specified alg value is not allowed
+2026-08-13 15:06:23,626 [INFO] api.auth_routes: Proses login untuk email: admin@ogut.com
+2026-08-13 15:06:24,346 [INFO] httpx: HTTP Request: POST https://hvlozalqchfjqplnwfgs.supabase.co/auth/v1/token?grant_type=password "HTTP/2 200 OK"
+2026-08-13 15:06:24,932 [INFO] httpx: HTTP Request: GET https://hvlozalqchfjqplnwfgs.supabase.co/rest/v1/user_roles?select=role&user_id=eq.7d86fd4a-a8c4-4743-9a83-4062b024f616 "HTTP/2 200 OK"
+2026-08-13 15:06:24,934 [INFO] api.auth_routes: User admin@ogut.com berhasil login dengan role: admin
+2026-08-13 15:27:18,235 [INFO] app: Memulai pemuatan awal data N-Gram...
+2026-08-13 15:27:18,237 [INFO] ngram: Memuat data N-Gram dari file backup ngram_backup.json...
+2026-08-13 15:27:18,237 [INFO] ngram: Berhasil memuat 48 data dari backup.
+2026-08-13 15:27:18,237 [INFO] ngram: Mensinkronkan data N-Gram dengan menu dasar dari Supabase...
+2026-08-13 15:27:19,234 [INFO] httpx: HTTP Request: GET https://hvlozalqchfjqplnwfgs.supabase.co/rest/v1/products?select=name "HTTP/2 200 OK"
+2026-08-13 15:27:19,242 [INFO] ngram: Sinkronisasi selesai. Menambahkan 0 menu baru. Total menu dalam RAM: 48.
+2026-08-13 15:27:19,249 [INFO] ngram: N-Gram backup saved successfully to ngram_backup.json (48 items).
+2026-08-13 15:27:19,271 [INFO] apscheduler.scheduler: Adding job tentatively -- it will be properly scheduled when the scheduler starts
+2026-08-13 15:27:19,273 [INFO] apscheduler.scheduler: Added job "run_nightly_ai_jobs" to job store "default"
+2026-08-13 15:27:19,273 [INFO] apscheduler.scheduler: Scheduler started
+2026-08-13 15:27:19,299 [INFO] app: Jadwal Scheduler AI aktif pada 23:59 setiap hari.
+2026-08-13 15:27:19,299 [INFO] apscheduler.scheduler: Scheduler has been shut down

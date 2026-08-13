@@ -61,112 +61,12 @@
 
         <!-- TAB NAVIGATOR -->
         <div class="flex gap-2 border-b border-slate-200 pb-3 overflow-x-auto scrollbar-hide">
-            <button onclick="switchTab('kmeans')" id="btn-kmeans" class="tab-btn px-6 py-3.5 clay-button text-xs font-black uppercase tracking-widest text-slate-500 hover:text-slate-800 transition-all shrink-0">
-                1. K-Means (Segmentasi Menu)
-            </button>
             <button onclick="switchTab('regression')" id="btn-regression" class="tab-btn px-6 py-3.5 clay-button text-xs font-black uppercase tracking-widest text-slate-500 hover:text-slate-800 transition-all shrink-0">
-                2. Regresi Linier (Prediksi Stok)
+                1. Regresi Linier (Prediksi Stok)
             </button>
             <button onclick="switchTab('ngram')" id="btn-ngram" class="tab-btn px-6 py-3.5 clay-button text-xs font-black uppercase tracking-widest text-slate-500 hover:text-slate-800 transition-all shrink-0">
-                3. RAM N-Gram (Rekomendasi)
+                2. RAM N-Gram (Rekomendasi)
             </button>
-        </div>
-
-        <!-- TAB K-MEANS -->
-        <div id="tab-kmeans" class="tab-content hidden space-y-8">
-            <div class="clay-card p-8 md:p-10 space-y-8">
-                <div>
-                    <Badge class="bg-purple-100 text-purple-700 font-black uppercase tracking-widest text-[9px] px-3 py-1 rounded-full border border-purple-200">K-Means Clustering</Badge>
-                    <h2 class="text-3xl font-black text-slate-900 tracking-tight font-outfit mt-4 uppercase">Segmentasi Kelas Kinerja Menu</h2>
-                    <p class="text-slate-500 text-sm mt-1 leading-relaxed">Mengelompokkan produk berdasarkan tingkat kelarisan (volume penjualan) dan profit margin bersih untuk memetakan produk penyumbang keuntungan utama.</p>
-                </div>
-
-                <!-- Live Metrics Card -->
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 bg-purple-50/50 p-6 rounded-2xl border border-purple-100">
-                    <div class="space-y-1">
-                        <span class="text-[9px] font-extrabold uppercase tracking-widest text-purple-600 block opacity-70">Evaluasi Model Saat Ini</span>
-                        <h4 class="text-sm font-black text-slate-900">Silhouette Coefficient (Kualitas Klaster)</h4>
-                        <div class="flex items-baseline gap-2 mt-2">
-                            <span class="text-3xl font-black text-purple-700 tracking-tighter">{{ thoughts.kmeans.silhouette if thoughts.kmeans else '0.00' }}</span>
-                            <span class="text-xs text-slate-400 font-semibold">(Skala -1.0 s/d +1.0)</span>
-                        </div>
-                        <p class="text-xs text-slate-500 mt-2 font-medium leading-relaxed">Nilai mendekati 1.0 mengindikasikan bahwa batas segmentasi produk sangat tegas dan kelompok terpisah secara optimal.</p>
-                    </div>
-
-                    <div class="space-y-1 border-t md:border-t-0 md:border-l border-purple-100 pt-4 md:pt-0 md:pl-6 flex flex-col justify-between">
-                        <div>
-                            <span class="text-[9px] font-extrabold uppercase tracking-widest text-purple-600 block opacity-70">Keputusan Matematis Terakhir</span>
-                            <h4 class="text-sm font-black text-slate-900">Koordinat Centroid Klaster Terbaik</h4>
-                            <p class="text-xs text-slate-600 mt-2 font-mono leading-relaxed bg-white p-2 rounded-lg border border-purple-100/50">
-                                {{ thoughts.kmeans.alasan if thoughts.kmeans else 'Belum dievaluasi oleh cronjob malam.' }}
-                            </p>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Flowchart K-Means -->
-                <div class="space-y-4">
-                    <h3 class="text-sm font-extrabold uppercase tracking-widest text-slate-900 font-outfit">Visualisasi Alur Algoritma (Data Pipeline)</h3>
-                    <div class="grid grid-cols-1 md:grid-cols-5 gap-4 items-center">
-                        <div class="p-5 bg-white rounded-2xl border border-slate-200 text-center flex flex-col justify-center h-32 hover:border-purple-300 transition-colors shadow-sm">
-                            <span class="text-xs font-black uppercase text-purple-600 mb-1">1. ETL Data</span>
-                            <p class="text-[11px] text-slate-500 font-bold leading-tight">Mengekstrak total `quantity` & `profit_margin` per produk dari `transaction_items`</p>
-                        </div>
-                        <div class="hidden md:flex justify-center text-purple-300 font-black text-xl">→</div>
-                        
-                        <div class="p-5 bg-white rounded-2xl border border-slate-200 text-center flex flex-col justify-center h-32 hover:border-purple-300 transition-colors shadow-sm">
-                            <span class="text-xs font-black uppercase text-purple-600 mb-1">2. Normalisasi</span>
-                            <p class="text-[11px] text-slate-500 font-bold leading-tight">Mengubah nilai ke skala [0-1] menggunakan `MinMaxScaler` agar bobot seimbang</p>
-                        </div>
-                        <div class="hidden md:flex justify-center text-purple-300 font-black text-xl">→</div>
-                        
-                        <div class="p-5 bg-white rounded-2xl border border-slate-200 text-center flex flex-col justify-center h-32 hover:border-purple-300 transition-colors shadow-sm">
-                            <span class="text-xs font-black uppercase text-purple-600 mb-1">3. K-Means Fit</span>
-                            <p class="text-[11px] text-slate-500 font-bold leading-tight">Menemukan tren data dan melatih model $k=3$ cluster berbasis kemiripan jarak</p>
-                        </div>
-                    </div>
-
-                    <div class="flex justify-center py-2 hidden md:flex text-purple-300 font-black text-xl">↓</div>
-
-                    <div class="grid grid-cols-1 md:grid-cols-5 gap-4 items-center">
-                        <div class="p-5 bg-white rounded-2xl border border-slate-200 text-center flex flex-col justify-center h-32 hover:border-purple-300 transition-colors shadow-sm">
-                            <span class="text-xs font-black uppercase text-purple-600 mb-1">6. Supabase DB</span>
-                            <p class="text-[11px] text-slate-500 font-bold leading-tight">Menyimpan segmentasi & Silhouette Score ke tabel `ai_cluster_results`</p>
-                        </div>
-                        <div class="hidden md:flex justify-center text-purple-300 font-black text-xl">←</div>
-                        
-                        <div class="p-5 bg-white rounded-2xl border border-slate-200 text-center flex flex-col justify-center h-32 hover:border-purple-300 transition-colors shadow-sm">
-                            <span class="text-xs font-black uppercase text-purple-600 mb-1">5. Labeling Bisnis</span>
-                            <p class="text-[11px] text-slate-500 font-bold leading-tight">Membandingkan centroid penjumlahan: Tertinggi = Laris & Untung, Terendah = Kurang Laris</p>
-                        </div>
-                        <div class="hidden md:flex justify-center text-purple-300 font-black text-xl">←</div>
-                        
-                        <div class="p-5 bg-white rounded-2xl border border-slate-200 text-center flex flex-col justify-center h-32 hover:border-purple-300 transition-colors shadow-sm">
-                            <span class="text-xs font-black uppercase text-purple-600 mb-1">4. Evaluasi Model</span>
-                            <p class="text-[11px] text-slate-500 font-bold leading-tight">Menghitung koefisien Silhouette untuk validasi kekuatan cluster</p>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Explanation Cards -->
-                <div class="space-y-4 pt-4 border-t border-slate-100">
-                    <h3 class="text-sm font-extrabold uppercase tracking-widest text-slate-900 font-outfit">Langkah Demi Langkah Logika Model</h3>
-                    <div class="space-y-3">
-                        <div class="flex items-start gap-4">
-                            <div class="w-8 h-8 rounded-full bg-purple-100 text-purple-700 font-black text-xs flex items-center justify-center shrink-0">1</div>
-                            <p class="text-sm text-slate-600 leading-relaxed pt-1">AI menarik log historis transaksi dari database untuk menjumlahkan volume penjualan menu dan margin keuntungan bersihnya. Skala data tersebut disetarakan menggunakan normalisasi data terkecil dan terbesar (MinMax) agar selisih harga tidak menutupi volume penjualan.</p>
-                        </div>
-                        <div class="flex items-start gap-4">
-                            <div class="w-8 h-8 rounded-full bg-purple-100 text-purple-700 font-black text-xs flex items-center justify-center shrink-0">2</div>
-                            <p class="text-sm text-slate-600 leading-relaxed pt-1">Algoritma menetapkan 3 pusat koordinat acak (*Centroids*), kemudian menghitung jarak Euclidean dari setiap produk ke 3 pusat tersebut, lalu berulang kali menyesuaikan posisinya hingga konvergen (tidak bergeser lagi).</p>
-                        </div>
-                        <div class="flex items-start gap-4">
-                            <div class="w-8 h-8 rounded-full bg-purple-100 text-purple-700 font-black text-xs flex items-center justify-center shrink-0">3</div>
-                            <p class="text-sm text-slate-600 leading-relaxed pt-1">Setelah selesai dikelompokkan, AI menghitung total penjumlahan centroid. Klaster dengan koordinat centroid tertinggi dilabeli <b>'Laris & Untung Besar'</b> (bintang utama), klaster terendah dilabeli <b>'Kurang Laris'</b>, dan sisanya dilabeli <b>'Menengah'</b>. Data ini langsung diperbarui di database untuk disajikan ke admin.</p>
-                        </div>
-                    </div>
-                </div>
-            </div>
         </div>
 
         <!-- TAB REGRESSION -->
@@ -385,7 +285,7 @@
 
         // Jalankan default tab saat pertama kali dimuat
         document.addEventListener("DOMContentLoaded", function() {
-            switchTab('kmeans');
+            switchTab('regression');
         });
     </script>
 </body>

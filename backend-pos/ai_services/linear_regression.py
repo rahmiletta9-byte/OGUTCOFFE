@@ -4,7 +4,10 @@ from sklearn.linear_model import LinearRegression
 from sklearn.metrics import mean_absolute_percentage_error
 from config.supabase_client import db
 
+LAST_AI_THOUGHTS = {}
+
 def run_regression():
+    global LAST_AI_THOUGHTS
     print("[AI JOB] Memulai Prediksi Stok (Regresi Linier) berdasarkan Tingkat Konsumsi...")
     try:
         # 1. Ekstraksi Log Inventaris (Minimal butuh data 5 hari ke belakang per bahan baku)
