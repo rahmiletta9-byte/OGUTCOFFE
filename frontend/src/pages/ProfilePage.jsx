@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { supabase } from '@/lib/supabaseClient';
 import { useAuth } from '@/features/auth/context/AuthContext';
+import { apiClient } from '@/lib/apiClient';
 import { logActivity } from '@/lib/logger';
 import { User, KeyRound, Mail, ShieldAlert, ShieldCheck, Eye, EyeOff, Loader2, Save } from 'lucide-react';
 import { Button } from "@/components/ui/button";
@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import PageHeader from '@/components/layout/PageHeader';
 
 export default function ProfilePage() {
-  const { user, role } = useAuth();
+  const { user, role, setUser } = useAuth();
   
   const [displayName, setDisplayName] = useState('');
   const [newPassword, setNewPassword] = useState('');
@@ -41,11 +41,21 @@ export default function ProfilePage() {
     setProfileError('');
 
     try {
-      const { data, error } = await supabase.auth.updateUser({
-        data: { display_name: displayName }
+      const res = await apiClient.put('/api/auth/update-profile', {
+        display_name: displayName
       });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Gagal memperbarui profil.');
 
-      if (error) throw error;
+      if (setUser && user) {
+        setUser({
+          ...user,
+          user_metadata: {
+            ...(user.user_metadata || {}),
+            display_name: displayName
+          }
+        });
+      }
 
       await logActivity(user.id, 'UPDATE_PROFILE', `Memperbarui nama tampilan profil menjadi: ${displayName}`);
       setProfileSuccess('Nama profil berhasil diperbarui!');
@@ -75,11 +85,11 @@ export default function ProfilePage() {
     }
 
     try {
-      const { error } = await supabase.auth.updateUser({
+      const res = await apiClient.put('/api/auth/update-password', {
         password: newPassword
       });
-
-      if (error) throw error;
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Gagal memperbarui kata sandi.');
 
       await logActivity(user.id, 'CHANGE_PASSWORD', 'Memperbarui kata sandi akun');
       setPasswordSuccess('Kata sandi berhasil diperbarui!');

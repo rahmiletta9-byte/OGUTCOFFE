@@ -44,41 +44,46 @@ export const processCheckout = async (cartItems, totalAmount, paymentMethod, cus
     }
 
     // 3.5. CATAT AKTIVITAS CHECKOUT
-    const { data: { session } } = await supabase.auth.getSession();
-    if (session?.user) {
-      if (import.meta.env.DEV) {
-        console.log("Checkout: Logging activity to audit trail for user:", session.user.email);
+    try {
+      const token = localStorage.getItem('pos_token');
+      if (token) {
+        // Parse payload user_id secara lokal
+        const base64Url = token.split('.')[1];
+        if (base64Url) {
+          const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+          const jsonPayload = decodeURIComponent(atob(base64).split('').map(c => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2)).join(''));
+          const payload = JSON.parse(jsonPayload);
+          if (payload?.sub) {
+            logActivity(
+              payload.sub,
+              'CHECKOUT',
+              `Transaksi senilai Rp ${totalAmount.toLocaleString('id-ID')} (${paymentMethod}) - ${cartItems.length} item`
+            ).catch(err => console.error("Checkout: Failed to log activity:", err));
+          }
+        }
       }
-      logActivity(
-        session.user.id,
-        'CHECKOUT',
-        `Transaksi senilai Rp ${totalAmount.toLocaleString('id-ID')} (${paymentMethod}) - ${cartItems.length} item`
-      ).then(() => {
-        if (import.meta.env.DEV) console.log("Checkout: Audit log inserted successfully.");
-      }).catch(err => console.error("Checkout: Failed to log activity:", err));
+    } catch (e) {
+      console.warn("Checkout: Failed to parse user id from token:", e);
     }
 
     // 4. FIRE-AND-FORGET KE FLASK (AI N-GRAM)
-    // Menggunakan fetch asinkron tanpa 'await' agar UI tetap responsif
-    const flaskApiUrl = import.meta.env.VITE_FLASK_API_URL;
-    if (flaskApiUrl) {
-      const itemsList = cartItems.map(item => item.name);
-      if (import.meta.env.DEV) {
-        console.log("Checkout: Dispatching background N-Gram trigger to Flask:", itemsList);
-      }
-      fetch(`${flaskApiUrl}/api/ngram/increment`, {
-        method: 'POST',
-        headers: { 
-          'Content-Type': 'application/json',
-          'X-API-Key': import.meta.env.VITE_INTERNAL_API_KEY || ''
-        },
-        body: JSON.stringify({ 
-          items: itemsList 
-        })
-      }).then(res => {
-        if (import.meta.env.DEV) console.log("Checkout: Flask background N-Gram response status:", res.status);
-      }).catch(err => console.error("Flask AI Update Failed (Background):", err));
+    // Menggunakan apiClient tanpa 'await' agar UI tetap responsif
+    const itemsList = cartItems.map(item => item.name);
+    if (import.meta.env.DEV) {
+      console.log("Checkout: Dispatching background N-Gram trigger to Flask:", itemsList);
     }
+    
+    // Import or call apiClient dynamically or directly
+    fetch(`${import.meta.env.VITE_FLASK_API_URL || 'http://127.0.0.1:5000'}/api/ngram/increment`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${localStorage.getItem('pos_token') || ''}`
+      },
+      body: JSON.stringify({ items: itemsList })
+    }).then(res => {
+      if (import.meta.env.DEV) console.log("Checkout: Flask background N-Gram response status:", res.status);
+    }).catch(err => console.error("Flask AI Update Failed (Background):", err));
 
     return { success: true };
   } catch (error) {

@@ -53,6 +53,11 @@
             </div>
             
             <div class="flex flex-wrap gap-2 items-center">
+                <!-- Sisa Waktu Sesi -->
+                <div class="bg-amber-50 border border-amber-200 text-amber-800 px-4 py-3 rounded-2xl font-bold uppercase tracking-wider text-[10px] flex items-center gap-2">
+                    <span class="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse"></span>
+                    <span>Sesi IT: <span id="session-timer">--:--</span></span>
+                </div>
                 <a href="/admin/ngram" class="clay-button bg-white border border-slate-200/60 text-slate-700 hover:bg-slate-50 hover:text-slate-900 px-5 py-3 font-bold uppercase tracking-wider text-[10px]">
                     Cek RAM N-Gram
                 </a>
@@ -118,5 +123,29 @@
         </div>
 
     </div>
+    
+    <script>
+        // Sisa waktu sesi dalam detik
+        const sessionTimeoutMinutes = 30;
+        let sessionTimeRemaining = sessionTimeoutMinutes * 60;
+        const timerDisplay = document.getElementById('session-timer');
+
+        function updateTimer() {
+            const minutes = Math.floor(sessionTimeRemaining / 60);
+            const seconds = sessionTimeRemaining % 60;
+            timerDisplay.textContent = `${minutes}:${seconds < 10 ? '0' : ''}${seconds}`;
+
+            if (sessionTimeRemaining <= 0) {
+                // Auto redirect ke login jika sisa waktu habis
+                window.location.href = '/admin/login?timeout=1';
+            } else {
+                sessionTimeRemaining--;
+            }
+        }
+
+        // Jalankan timer setiap 1 detik
+        setInterval(updateTimer, 1000);
+        updateTimer();
+    </script>
 </body>
 </html>

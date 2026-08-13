@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { supabase } from '@/lib/supabaseClient';
+import { apiClient } from '@/lib/apiClient';
 import { logActivity } from '@/lib/logger';
 import { useAuth } from '@/features/auth/context/AuthContext';
 import { UserPlus, Shield, User as UserIcon, Lock } from 'lucide-react';
@@ -17,18 +17,10 @@ export default function UserManager({ onSuccess }) {
     setIsLoading(true);
 
     try {
-      const flaskApiUrl = import.meta.env.VITE_FLASK_API_URL || 'http://127.0.0.1:5000';
-      const response = await fetch(`${flaskApiUrl}/api/admin/create-user`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'X-API-Key': import.meta.env.VITE_INTERNAL_API_KEY || ''
-        },
-        body: JSON.stringify({
-          email: formData.email,
-          password: formData.password,
-          role: formData.role
-        })
+      const response = await apiClient.post('/api/admin/create-user', {
+        email: formData.email,
+        password: formData.password,
+        role: formData.role
       });
 
       const resData = await response.json();
@@ -36,7 +28,7 @@ export default function UserManager({ onSuccess }) {
         throw new Error(resData.error || 'Terjadi kesalahan saat membuat staf baru');
       }
 
-      await logActivity(user.id, 'CREATE_USER', `Mendaftarkan staf baru: ${formData.email}`);
+      await logActivity(user?.id, 'CREATE_USER', `Mendaftarkan staf baru: ${formData.email}`);
       alert('Akun staf berhasil dibuat!');
       setFormData({ email: '', password: '', role: 'kasir' });
       if (onSuccess) onSuccess(); 

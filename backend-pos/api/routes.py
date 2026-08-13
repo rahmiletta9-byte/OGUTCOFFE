@@ -3,6 +3,7 @@ import os
 import logging
 from functools import wraps
 from memory.ngram_cache import get_suggestions, increment_frequency
+from auth import jwt_required, role_required
 
 # Logger Setup
 logger = logging.getLogger("api")
@@ -10,24 +11,9 @@ logger = logging.getLogger("api")
 # Membuat Blueprint untuk grup API
 api_bp = Blueprint('api', __name__)
 
-def require_api_key(f):
-    @wraps(f)
-    def decorated(*args, **kwargs):
-        # Mengambil X-API-Key dari header
-        api_key = request.headers.get('X-API-Key')
-        expected_key = os.environ.get('INTERNAL_API_KEY', 'ogut_pos_internal_api_key_2026')
-        
-        logger.info(f"Incoming request {request.method} {request.path} from {request.remote_addr}. API Key: {'VALID' if api_key == expected_key else 'INVALID'}")
-        
-        if not api_key or api_key != expected_key:
-            logger.warning(f"Unauthorized API Key access from {request.remote_addr}")
-            return jsonify({"error": "Unauthorized: API Key tidak valid atau kosong"}), 401
-            
-        return f(*args, **kwargs)
-    return decorated
-
 @api_bp.route('/api/suggest', methods=['GET'])
-@require_api_key
+@jwt_required
+@role_required(['kasir', 'admin'])
 def suggest():
     """
     Endpoint untuk mencari menu. 
@@ -44,7 +30,8 @@ def suggest():
     return jsonify(results), 200
 
 @api_bp.route('/api/ngram/increment', methods=['POST'])
-@require_api_key
+@jwt_required
+@role_required(['kasir', 'admin'])
 def increment():
     """
     Endpoint untuk menambah skor (dipanggil diam-diam setelah Checkout).
@@ -66,7 +53,8 @@ def increment():
     return jsonify({"status": "success", "message": "N-Gram berhasil diperbarui"}), 200
 
 @api_bp.route('/api/admin/create-user', methods=['POST'])
-@require_api_key
+@jwt_required
+@role_required(['admin'])
 def admin_create_user():
     """
     Endpoint untuk membuat user baru (staf/kasir) dengan service_role key.

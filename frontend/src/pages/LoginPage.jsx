@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { supabase } from '@/lib/supabaseClient';
 import { useAuth } from '@/features/auth/context/AuthContext';
+import { apiClient } from '@/lib/apiClient';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { 
@@ -27,9 +27,14 @@ export default function LoginPage() {
   const [errorMsg, setErrorMsg] = useState('');
   const [showQuickAccess, setShowQuickAccess] = useState(false);
   const [activeQuickFill, setActiveQuickFill] = useState(null);
+  const [showResetModal, setShowResetModal] = useState(false);
+  const [resetEmail, setResetEmail] = useState('');
+  const [isResetting, setIsResetting] = useState(false);
+  const [resetStatus, setResetStatus] = useState('');
+  const [resetMessage, setResetMessage] = useState('');
   
   const navigate = useNavigate();
-  const { user, role } = useAuth();
+  const { user, role, login } = useAuth();
 
   // Redirect otomatis jika user yang sudah login mengakses /login
   useEffect(() => {
@@ -46,31 +51,39 @@ export default function LoginPage() {
     setErrorMsg('');
     
     try {
-      const { data: authData, error: authError } = await supabase.auth.signInWithPassword({ email, password });
-      if (authError) throw authError;
-
-      const userId = authData.user.id;
-      const { data: roleData, error: roleError } = await supabase
-        .from('user_roles').select('role').eq('user_id', userId).single();
-
-      if (roleError || !roleData || !roleData.role) {
-        await supabase.auth.signOut();
-        throw new Error("Role pengguna tidak ditemukan. Silakan hubungi Administrator.");
-      }
-
-      const userRole = roleData.role;
-      if (userRole === 'admin') navigate('/dashboard');
-      else if (userRole === 'kasir') navigate('/pos');
-      else if (userRole === 'manajemen_bahan') navigate('/inventory');
-      else {
-        await supabase.auth.signOut();
-        throw new Error("Role tidak dikenali.");
-      }
-
+      const data = await login(email, password);
+      const userRole = data.role;
+      if (userRole === 'admin') navigate('/dashboard', { replace: true });
+      else if (userRole === 'kasir') navigate('/pos', { replace: true });
+      else if (userRole === 'manajemen_bahan') navigate('/inventory', { replace: true });
+      else navigate('/', { replace: true });
     } catch (error) {
       setErrorMsg(error.message);
     } finally {
       setIsSubmitting(false);
+    }
+  };
+
+  const handleResetPassword = async (e) => {
+    e.preventDefault();
+    setIsResetting(true);
+    setResetMessage('');
+    setResetStatus('');
+
+    try {
+      const response = await apiClient.post('/api/auth/reset-password', { email: resetEmail });
+      const data = await response.json();
+      if (!response.ok) {
+        throw new Error(data.error || "Gagal mengirim email reset password.");
+      }
+
+      setResetStatus('success');
+      setResetMessage(data.message || "Email reset password telah dikirim.");
+    } catch (err) {
+      setResetStatus('error');
+      setResetMessage(err.message);
+    } finally {
+      setIsResetting(false);
     }
   };
 
@@ -160,7 +173,7 @@ export default function LoginPage() {
                 <button 
                   type="button"
                   onClick={() => {
-                    setErrorMsg('Silakan hubungi Administrator IT untuk mereset kata sandi Anda.');
+                    setShowResetModal(true);
                   }}
                   className="text-[9px] font-semibold text-amber-500/80 hover:text-amber-400 uppercase tracking-wider transition-colors"
                 >
@@ -298,6 +311,96 @@ export default function LoginPage() {
           </p>
         </div>
       </div>
+
+      {/* Modal Reset Password */}
+      {showResetModal && (
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/80 backdrop-blur-md p-4 animate-in fade-in duration-300">
+          <div className="w-full max-w-[400px] rounded-2xl bg-[#141211] border border-stone-800 p-8 space-y-6 shadow-2xl relative">
+            <div className="text-center space-y-2">
+              <h3 className="text-lg font-bold text-stone-100 uppercase tracking-wider">Reset Kata Sandi</h3>
+              <p className="text-stone-500 text-[10px] leading-relaxed uppercase tracking-wider">
+                Masukkan email terdaftar untuk menerima link reset
+              </p>
+            </div>
+
+            {resetStatus === 'success' ? (
+              <div className="space-y-4">
+                <div className="p-4 bg-amber-950/20 border border-amber-900/30 text-amber-300 text-xs rounded-xl flex items-start gap-2.5">
+                  <CheckCircle size={16} className="text-amber-500 shrink-0 mt-0.5" />
+                  <p>{resetMessage}</p>
+                </div>
+                <Button 
+                  type="button" 
+                  onClick={() => {
+                    setShowResetModal(false);
+                    setResetStatus('');
+                    setResetEmail('');
+                  }}
+                  className="w-full h-11 bg-amber-600 hover:bg-amber-500 text-stone-950 font-bold text-xs uppercase tracking-wider rounded-xl"
+                >
+                  Kembali ke Login
+                </Button>
+              </div>
+            ) : (
+              <form onSubmit={handleResetPassword} className="space-y-4">
+                {resetStatus === 'error' && (
+                  <div className="p-3 bg-red-950/30 border border-red-900/40 text-red-300 text-xs rounded-xl flex items-center gap-2.5">
+                    <AlertCircle size={16} className="text-red-400 shrink-0" />
+                    <span>{resetMessage}</span>
+                  </div>
+                )}
+                
+                <div className="space-y-1.5">
+                  <label className="text-[10px] font-bold text-stone-400 uppercase tracking-wider ml-0.5">
+                    Alamat Email
+                  </label>
+                  <div className="relative group">
+                    <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-stone-500 group-focus-within:text-amber-500 transition-colors duration-200">
+                      <Mail size={16} className="opacity-80" />
+                    </div>
+                    <Input 
+                      type="email" 
+                      value={resetEmail}
+                      placeholder="name@ogutcoffee.com" 
+                      required 
+                      className="bg-stone-900/50 border-stone-800/90 focus:border-amber-500 focus:ring-1 focus:ring-amber-500 text-stone-100 rounded-xl h-11 pl-11 pr-4 text-xs transition-all placeholder:text-stone-600" 
+                      onChange={e => setResetEmail(e.target.value)} 
+                    />
+                  </div>
+                </div>
+
+                <div className="flex gap-3 mt-2">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setShowResetModal(false);
+                      setResetStatus('');
+                      setResetEmail('');
+                    }}
+                    className="flex-1 h-11 bg-transparent hover:bg-stone-900 border border-stone-800 hover:border-stone-700 text-stone-400 hover:text-stone-200 font-bold text-xs uppercase tracking-wider rounded-xl transition-all duration-200"
+                  >
+                    Batal
+                  </button>
+                  <Button 
+                    type="submit" 
+                    disabled={isResetting} 
+                    className="flex-1 h-11 bg-amber-600 hover:bg-amber-500 disabled:bg-stone-800 disabled:text-stone-600 text-stone-950 font-bold text-xs uppercase tracking-wider rounded-xl transition-all duration-200 flex items-center justify-center gap-2"
+                  >
+                    {isResetting ? (
+                      <>
+                        <Loader2 size={15} className="animate-spin text-stone-950" />
+                        <span>Mengirim...</span>
+                      </>
+                    ) : (
+                      <span>Kirim Link</span>
+                    )}
+                  </Button>
+                </div>
+              </form>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

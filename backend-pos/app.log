@@ -16,3 +16,50 @@
  * Running on http://10.208.14.212:5000
 2026-06-24 15:19:27,635 [INFO] werkzeug: [33mPress CTRL+C to quit[0m
 2026-06-24 17:04:58,378 [INFO] apscheduler.scheduler: Scheduler has been shut down
+2026-08-12 21:52:13,673 [INFO] app: Memulai pemuatan awal data N-Gram...
+2026-08-12 21:52:13,675 [INFO] ngram: Memuat data N-Gram dari file backup ngram_backup.json...
+2026-08-12 21:52:13,676 [INFO] ngram: Berhasil memuat 39 data dari backup.
+2026-08-12 21:52:13,676 [INFO] ngram: Mensinkronkan data N-Gram dengan menu dasar dari Supabase...
+2026-08-12 21:52:15,402 [INFO] httpx: HTTP Request: GET https://hvlozalqchfjqplnwfgs.supabase.co/rest/v1/products?select=name "HTTP/2 200 OK"
+2026-08-12 21:52:15,404 [INFO] ngram: Sinkronisasi selesai. Menambahkan 9 menu baru. Total menu dalam RAM: 48.
+2026-08-12 21:52:15,408 [INFO] ngram: N-Gram backup saved successfully to ngram_backup.json (48 items).
+2026-08-12 21:52:15,442 [INFO] apscheduler.scheduler: Adding job tentatively -- it will be properly scheduled when the scheduler starts
+2026-08-12 21:52:15,444 [INFO] apscheduler.scheduler: Added job "run_nightly_ai_jobs" to job store "default"
+2026-08-12 21:52:15,444 [INFO] apscheduler.scheduler: Scheduler started
+2026-08-12 21:52:15,448 [INFO] app: Jadwal Scheduler AI aktif pada 23:59 setiap hari.
+2026-08-12 21:52:15,449 [INFO] apscheduler.scheduler: Scheduler has been shut down
+2026-08-12 22:27:19,955 [INFO] app: Memulai pemuatan awal data N-Gram...
+2026-08-12 22:27:19,955 [INFO] ngram: Memuat data N-Gram dari file backup ngram_backup.json...
+2026-08-12 22:27:19,957 [INFO] ngram: Berhasil memuat 48 data dari backup.
+2026-08-12 22:27:19,957 [INFO] ngram: Mensinkronkan data N-Gram dengan menu dasar dari Supabase...
+2026-08-12 22:27:23,600 [INFO] httpx: HTTP Request: GET https://hvlozalqchfjqplnwfgs.supabase.co/rest/v1/products?select=name "HTTP/2 200 OK"
+2026-08-12 22:27:23,609 [INFO] ngram: Sinkronisasi selesai. Menambahkan 0 menu baru. Total menu dalam RAM: 48.
+2026-08-12 22:27:23,612 [INFO] ngram: N-Gram backup saved successfully to ngram_backup.json (48 items).
+2026-08-12 22:27:23,631 [INFO] apscheduler.scheduler: Adding job tentatively -- it will be properly scheduled when the scheduler starts
+2026-08-12 22:27:23,633 [INFO] apscheduler.scheduler: Added job "run_nightly_ai_jobs" to job store "default"
+2026-08-12 22:27:23,633 [INFO] apscheduler.scheduler: Scheduler started
+2026-08-12 22:27:23,637 [INFO] app: Jadwal Scheduler AI aktif pada 23:59 setiap hari.
+2026-08-12 22:29:09,479 [INFO] app: Memulai pemuatan awal data N-Gram...
+2026-08-12 22:29:09,487 [INFO] ngram: Memuat data N-Gram dari file backup ngram_backup.json...
+2026-08-12 22:29:09,511 [INFO] ngram: Berhasil memuat 48 data dari backup.
+2026-08-12 22:29:09,517 [INFO] ngram: Mensinkronkan data N-Gram dengan menu dasar dari Supabase...
+2026-08-12 22:29:10,167 [INFO] httpx: HTTP Request: GET https://hvlozalqchfjqplnwfgs.supabase.co/rest/v1/products?select=name "HTTP/2 200 OK"
+2026-08-12 22:29:10,169 [INFO] ngram: Sinkronisasi selesai. Menambahkan 0 menu baru. Total menu dalam RAM: 48.
+2026-08-12 22:29:10,181 [INFO] ngram: N-Gram backup saved successfully to ngram_backup.json (48 items).
+2026-08-12 22:29:10,205 [INFO] apscheduler.scheduler: Adding job tentatively -- it will be properly scheduled when the scheduler starts
+2026-08-12 22:29:10,207 [INFO] apscheduler.scheduler: Added job "run_nightly_ai_jobs" to job store "default"
+2026-08-12 22:29:10,211 [INFO] apscheduler.scheduler: Scheduler started
+2026-08-12 22:29:10,215 [INFO] app: Jadwal Scheduler AI aktif pada 23:59 setiap hari.
+2026-08-13 15:02:10,367 [INFO] app: Memulai pemuatan awal data N-Gram...
+2026-08-13 15:02:10,369 [INFO] ngram: Memuat data N-Gram dari file backup ngram_backup.json...
+2026-08-13 15:02:10,370 [INFO] ngram: Berhasil memuat 48 data dari backup.
+2026-08-13 15:02:10,370 [INFO] ngram: Mensinkronkan data N-Gram dengan menu dasar dari Supabase...
+2026-08-13 15:02:11,749 [INFO] httpx: HTTP Request: GET https://hvlozalqchfjqplnwfgs.supabase.co/rest/v1/products?select=name "HTTP/2 200 OK"
+2026-08-13 15:02:11,775 [INFO] ngram: Sinkronisasi selesai. Menambahkan 0 menu baru. Total menu dalam RAM: 48.
+2026-08-13 15:02:11,780 [INFO] ngram: N-Gram backup saved successfully to ngram_backup.json (48 items).
+2026-08-13 15:02:11,801 [INFO] apscheduler.scheduler: Adding job tentatively -- it will be properly scheduled when the scheduler starts
+2026-08-13 15:02:11,801 [INFO] apscheduler.scheduler: Added job "run_nightly_ai_jobs" to job store "default"
+2026-08-13 15:02:11,803 [INFO] apscheduler.scheduler: Scheduler started
+2026-08-13 15:02:11,808 [INFO] app: Jadwal Scheduler AI aktif pada 23:59 setiap hari.
+2026-08-13 15:02:11,808 [INFO] apscheduler.scheduler: Scheduler has been shut down
+2026-08-13 15:04:59,326 [INFO] apscheduler.scheduler: Scheduler has been shut down
